@@ -24,11 +24,39 @@ their communities. It will serve as a useful tool for locals, councils, arborist
 
 ### Screen Designs
 
-
-
+The app has screen designs for the following pages
+  - Main Page
+  - Login Page
+  - Sign Up Page
+  - Map Page
+  - Search Page
+  - My Trees Page
+  - Add Tree Page
+  - Profile Page
+  - Individual Tree Page
 
 ![Screen Designs](./Rakau%20Screen%20Schematic.drawio.png)
 
 ### Navigation
 
+The user will be able to navigate across different screens using the Navigation menu showcased on the bottom of each screen in the schematic above.
+
 ### Design Choices
+
+#### Typography
+I chose IBM Plex Sans because of its unique ultra-condensed design, high-density glyph support, and because it is my main desktop font.
+
+- Font: 'IBM Plex Sans', sans-serif
+- Import: https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap
+
+#### Colour Scheme — Native Bush
+
+- I chose my color scheme because I wanted a color palette that is close to that of native bush/forest.
+
+- <span style="background:#2D5A3D;display:inline-block;width:12px;height:12px;border-radius:2px;"></span> Primary — `#2D5A3D`
+- <span style="background:#8B5E3C;display:inline-block;width:12px;height:12px;border-radius:2px;"></span> Secondary — `#8B5E3C`
+- <span style="background:#F5F1E8;display:inline-block;width:12px;height:12px;border-radius:2px;border:1px solid #ccc;"></span> Background — `#F5F1E8`
+- <span style="background:#C1272D;display:inline-block;width:12px;height:12px;border-radius:2px;"></span> Accent/Alert — `#C1272D`
+- <span style="background:#333333;display:inline-block;width:12px;height:12px;border-radius:2px;"></span> Text — `#333333`
+
+
