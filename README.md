@@ -46,8 +46,8 @@ The user will be able to navigate across different screens using the Navigation 
 #### Typography
 I chose IBM Plex Sans because of its unique ultra-condensed design, high-density glyph support, and because it is my main desktop font.
 
-- Font: 'IBM Plex Sans', sans-serif
-- Import: https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap
+- Font: Iosevka Nerd Font', sans-serif
+- Import: https://github.com/Iosevka-NerdFont/
 
 #### Colour Scheme — Native Bush
 
