@@ -114,17 +114,18 @@ flowchart LR
 
     subgraph API["Django REST API"]
         direction TB
-        Auth["Token auth (required)"]
-        ListView["GET /api/trees/mine/<br/>TreeListView"]
+        Auth["Token auth (required on every endpoint)"]
+        ListView["GET /api/trees/mine/<br/>owner-scoped list"]
         QS["Tree.objects.filter(owner=request.user)<br/>.order_by('-created_at')"]
         Pager["PageNumberPagination (page size 20)"]
-        Serializer["TreeListSerializer"]
+        DetailView["GET /api/trees/{id}/<br/>public read — any auth user"]
+        Serializer["TreeSerializer (list + detail)"]
         TreeModel[("Tree<br/>id, species, condition, region, created_at, owner")]
     end
 
     AS["@react-native-async-storage/async-storage"]
 
-    Screen -- "GET ?page=n (Authorization: Token)" --> Auth
+    Screen -- "GET /mine/?page=n (Authorization: Token)" --> Auth
     Auth -- "401 if no / invalid token" --> Screen
     Auth --> ListView
     ListView --> QS
@@ -136,9 +137,14 @@ flowchart LR
     Screen -- "write last good page-1 response" --> Cache
     Cache -. "read on network failure (show stale badge)" .-> Screen
     Screen -- "scroll to end -> request page n+1" --> Auth
-    Screen -- "tap row -> navigate {treeId}" --> Detail
+    Screen -- "tap row -> GET /api/trees/{id}/ (Authorization: Token)" --> Auth
+    Auth --> DetailView
+    DetailView -- "Tree.objects.get(pk=id) — no owner filter" --> Serializer
+    DetailView -- "200 {tree} to any authenticated user" --> Detail
     Cache -.-> AS
 ```
+
+> Read access (`GET` list and detail) needs only a valid token; `PATCH` / `DELETE /api/trees/{id}/` are owner-only and return `403` for a non-owner.
 
 ### Responsibility split
 
@@ -147,13 +153,15 @@ flowchart LR
 | Validation | Coerces the `page` query param to a positive integer before requesting | Rejects an out-of-range or non-integer `page` with `404`; ignores unknown query params |
 | Business logic | Merges paginated pages into one continuous list; shows an empty state + "Add tree" CTA when `count` is `0` | Scopes results to `owner = request.user`, orders newest-first, paginates at 20 |
 | State / caching | Virtualised list; stores the last successful page-1 response and renders it with a "stale" badge if a refresh fails | Stateless; no per-user list state held server-side |
-| Auth | Attaches `Authorization: Token <token>`; routes to login on `401` | Token auth required; the verified token identity *is* the ownership filter — an unscoped list is never exposed |
+| Auth | Attaches `Authorization: Token <token>`; routes to login on `401` | Every endpoint needs a valid token. The `/mine/` **list** is scoped to `request.user` in the queryset, so it never returns another user's trees. **Reads by id** are open to any authenticated user; ownership is checked only on `PATCH` / `DELETE` (`403` for a non-owner) |
 
 ### Key data exchanged
 
-- Request: `GET /api/trees/mine/?page=<n>` — header `Authorization: Token <token>`
-- Response: `200 { count, next, previous, results: [ { id, species, condition, region, thumbnail_url, created_at } ] }`
-- Errors: `401` (no/invalid token), `404` (page out of range)
+- List request: `GET /api/trees/mine/?page=<n>` — header `Authorization: Token <token>`
+- List response: `200 { count, next, previous, results: [ { id, species, condition, region, thumbnail_url, created_at } ] }`
+- Detail request: `GET /api/trees/{id}/` — header `Authorization: Token <token>` (any authenticated user, owner or not)
+- Detail response: `200 { id, species, latitude, longitude, condition, region, owner, created_at }`
+- Errors: `401` (no/invalid token), `404` (list `page` out of range, or detail `id` not found)
 
 ### External dependencies
 
@@ -162,6 +170,6 @@ flowchart LR
 
 ### Explanation (100–150 words)
 
-My Trees is drawn as a component diagram because its risk is structural, not sequential: the same list data flows through an owner-scoped queryset, a paginator, and a serializer, and is mirrored into an on-device cache. The security-critical decision is that ownership is enforced in the queryset from the verified token, never from a client-supplied `owner` parameter, so one user's request can never return another's trees. The client owns presentation concerns — virtualised scrolling, page merging, the empty state, and showing a stale cached list when a refresh fails — while the API owns scoping, ordering, and pagination. AsyncStorage is the only external dependency; the API needs none. An alternative considered was returning the entire list unpaginated to simplify the client; this was rejected because list size grows unbounded per user and would blow the 1.5 s first-render budget on mobile data.
+My Trees is drawn as a component diagram because its risk is structural, not sequential: list data flows through an owner-scoped queryset, a paginator, and a serializer, and is mirrored into an on-device cache. The security-critical decision is that the `/mine/` list is scoped to the verified token in the queryset, never to a client-supplied `owner`, so it can never return another user's trees. Reads by id are deliberately public: any authenticated user may view any tree; ownership is enforced only on writes (`PATCH` / `DELETE` return `403` for a non-owner). The client owns presentation concerns — virtualised scrolling, page merging, the empty state, and showing a stale cached list when a refresh fails — while the API owns scoping, ordering, and pagination. AsyncStorage is the only external dependency. A rejected alternative was an unpaginated list: per-user size grows unbounded and would blow the 1.5 s first-render budget on mobile data.
 
 ---
