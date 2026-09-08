@@ -28,47 +28,8 @@ Rationale for the pairing: Feature 1 is the app's UI-heavy write path (location 
 
 <!-- Sequence diagram. Source kept alongside this file; also renders on GitHub. -->
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor U as User
-    participant C as AddTreeScreen (React Native)
-    participant D as Device GPS / Map tiles (external)
-    participant V as POST /api/trees/ (DRF view + TreeSerializer)
-    participant DB as Tree model (PostgreSQL)
+![alt text](../Diagrams/add_tree.png)
 
-    U->>C: Open Add Tree screen
-    C->>D: Request location permission
-    D-->>C: Permission result
-    alt permission granted
-        D-->>C: Current position {lat, lng}
-    else denied / manual entry
-        U->>C: Drop map pin -> {lat, lng}
-    end
-    D-->>C: Map tiles (raster)
-
-    U->>C: Choose species (picker) + condition, tap Save
-    C->>C: Inline validation (required fields, numeric lat/lng)
-    alt client validation fails
-        C-->>U: Show per-field errors, keep entered data
-    else valid
-        C->>V: POST /api/trees/ (Authorization: Token) {species, latitude, longitude, condition}
-        alt missing / invalid token
-            V-->>C: 401 Unauthorized
-        else authenticated
-            V->>V: Serializer.validate() species in choices, lat/lng ranges, condition in choices
-            alt payload invalid
-                V-->>C: 400 {error: {code: validation_error, fields}}
-            else payload valid
-                V->>V: owner = request.user (from token, never trusted from body)
-                V->>DB: INSERT Tree
-                DB-->>V: row {id, created_at}
-                V-->>C: 201 {id, species, latitude, longitude, condition, owner, created_at}
-                C-->>U: Navigate to My Trees (new row visible)
-            end
-        end
-    end
-```
 
 ### Responsibility split
 
@@ -102,47 +63,7 @@ The Add Tree flow is modelled as a sequence diagram because its difficulty is in
 
 ### Diagram
 
-```mermaid
-flowchart LR
-    subgraph Client["React Native Client"]
-        direction TB
-        Screen["MyTreesScreen<br/>virtualised FlatList, pull-to-refresh"]
-        Merge["Page merge + empty-state / Add-tree CTA"]
-        Cache["TreeListCache (AsyncStorage)"]
-        Detail["Tree Detail screen"]
-    end
-
-    subgraph API["Django REST API"]
-        direction TB
-        Auth["Token auth (required on every endpoint)"]
-        ListView["GET /api/trees/mine/<br/>owner-scoped list"]
-        QS["Tree.objects.filter(owner=request.user)<br/>.order_by('-created_at')"]
-        Pager["PageNumberPagination (page size 20)"]
-        DetailView["GET /api/trees/{id}/<br/>public read — any auth user"]
-        Serializer["TreeSerializer (list + detail)"]
-        TreeModel[("Tree<br/>id, species, condition, region, created_at, owner")]
-    end
-
-    AS["@react-native-async-storage/async-storage"]
-
-    Screen -- "GET /mine/?page=n (Authorization: Token)" --> Auth
-    Auth -- "401 if no / invalid token" --> Screen
-    Auth --> ListView
-    ListView --> QS
-    QS --> Pager
-    Pager --> Serializer
-    Serializer --> TreeModel
-    ListView -- "200 {count, next, previous, results[]}" --> Merge
-    Merge --> Screen
-    Screen -- "write last good page-1 response" --> Cache
-    Cache -. "read on network failure (show stale badge)" .-> Screen
-    Screen -- "scroll to end -> request page n+1" --> Auth
-    Screen -- "tap row -> GET /api/trees/{id}/ (Authorization: Token)" --> Auth
-    Auth --> DetailView
-    DetailView -- "Tree.objects.get(pk=id) — no owner filter" --> Serializer
-    DetailView -- "200 {tree} to any authenticated user" --> Detail
-    Cache -.-> AS
-```
+![alt text](../Diagrams/list_my_trees.png)
 
 > Read access (`GET` list and detail) needs only a valid token; `PATCH` / `DELETE /api/trees/{id}/` are owner-only and return `403` for a non-owner.
 
