@@ -131,15 +131,3 @@ DRF permission classes: `IsAuthenticated` on every endpoint, plus a custom `IsOw
   "fields": { "latitude": ["Latitude must be between -90 and 90."] } } }
 ```
 
----
-
-## Marker checklist
-
-- [x] Every endpoint the two features need is listed
-- [x] Auth requirement stated per endpoint
-- [x] Authorisation / roles stated per endpoint
-- [x] Body parameters typed and marked required/optional
-- [x] Validation rules documented
-- [x] Consistent error response shape defined
-- [x] Status codes listed with meaning
-- [x] Endpoints fit the architecture described in `03-system-design.md`
