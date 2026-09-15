@@ -17,9 +17,6 @@ As the two features I have selected are the basic add and read functionality of 
 
 ## 4. What do you expect to be the most challenging part of implementing them?
 
-<!-- Be specific and technical. This is a prediction — you will revisit it in
-15-design-and-implementation-reflection.md. -->
-
 The most challenging part of implementing the two features may be integrating an external Map API such as MapTiler or Google Maps into my Map sections on the 'adding tree' and 'view all my trees' pages. Another complexity may be seperating the abstraction of individual pages of trees I recorded and trees that other people have recorded.
 
 ---
