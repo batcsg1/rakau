@@ -25,16 +25,32 @@ Prerequisites:
 - `pip` and `venv`
 - Database: SQLite for local development by default TODO (PostgreSQL if adopted)
 
+- Clone the project
+
 ```bash
-git clone <repo-url>
-cd <repo>/api                 # TODO: confirm API directory name
-python -m venv .venv
-source .venv/bin/activate     # Windows: .venv\Scripts\activate
+git clone -b project https://github.com/otago-polytechnic-bit-courses/s2-26-samuel-batchelor-id608001.git s2-26-samuel-batchelor-id608001
+cd s2-26-samuel-batchelor-id608001/api
+```
+
+- Create and activate the virtual environment
+
+```bash
+python -m venv venv
+
+# On Powershell
+source venv/Scripts/activate
+
+# On Fish
+source venv/bin/activate.fish
+
 pip install -r requirements.txt
+```
+- Setup environment and setup database
+
+```bash
 cp .env.example .env          # then fill in the values in the table below
 python manage.py migrate
 python manage.py createsuperuser   # optional — Django admin access
-python manage.py loaddata seed     # TODO: if seed fixtures are provided
 ```
 
 ## Environment variables
@@ -47,28 +63,35 @@ placeholder values.
 | `SECRET_KEY` | yes | Django cryptographic signing key | `django-insecure-…` |
 | `DEBUG` | yes | Debug mode; `False` for production-like runs | `True` |
 | `ALLOWED_HOSTS` | yes | Comma-separated hosts the API will serve | `localhost,127.0.0.1` |
-| `DATABASE_URL` | TODO | DB connection string (omit to use default SQLite) | `postgres://user:pass@localhost:5432/rakau` |
 | `CORS_ALLOWED_ORIGINS` | TODO | Origins the client runs from | `http://localhost:8081` |
-| TODO | | | |
 
 ## Development instructions
 
 ```bash
-source .venv/bin/activate
+# On Powershell
+source venv/Scripts/activate
+
+# On Fish
+source venv/bin/activate.fish
+
 python manage.py runserver          # http://127.0.0.1:8000
 python manage.py makemigrations     # after changing models
 python manage.py migrate
 ```
 
 - API base URL (dev): `http://127.0.0.1:8000/api/`
-- Browsable API: TODO (e.g. DRF browsable API at `/api/`)
-- Lint / format: TODO (e.g. `ruff check .`, `black .`)
+- Admin page URL: `http://127.0.0.1:8000/api/admin/`
 
 ## Testing instructions
 
 ```bash
-source .venv/bin/activate
-python manage.py test               # or: pytest
+# On Powershell
+source venv/Scripts/activate
+
+# On Fish
+source venv/bin/activate.fish
+
+python manage.py test             
 ```
 
 The suite covers, for each implemented endpoint:
