@@ -1,0 +1,114 @@
+# ===========================
+# General / OS / Editors
+# ===========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.log
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# ===========================
+# Django / Python
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual envs
+venv/
+.venv/
+env/
+ENV/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+local_settings.py
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ===========================
+# React Native / Node
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+.pnpm-store/
+
+# Metro / bundler
+.metro-health-check*
+*.jsbundle
+
+# Expo (harmless if not using Expo)
+.expo/
+web-build/
+expo-env.d.ts
+
+# ---------- iOS ----------
+ios/Pods/
+ios/build/
+**/xcuserdata/
+*.xcuserstate
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+DerivedData/
+ios/.xcode.env.local
+
+# ---------- Android ----------
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/app/release/
+.cxx/
+*.apk
+*.aab
+*.hprof
+
+# Signing keys (keep the debug one committed if you want)
+*.keystore
+!debug.keystore
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Fastlane
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+
+# Testing
+coverage/
