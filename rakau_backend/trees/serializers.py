@@ -2,14 +2,14 @@ from django.db.models import Count, F, Q
 from rest_framework import serializers
 from .models import Tree, Species
 
-class SpeciesSerializer:
+class SpeciesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Species
         fields = ["id", "common_name", "scientific_name", "is_native", "is_active", "slug"]
         read_only_fields = ["slug"]
 
 
-class SpeciesDetailSerializer:
+class SpeciesDetailSerializer(serializers.ModelSerializer):
     tree_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -20,7 +20,7 @@ class SpeciesDetailSerializer:
     def get_tree_count(self, obj):
         return getattr(obj, "tree_count", None)
 
-class TreeSerializer:
+class TreeSerializer(serializers.ModelSerializer):
 
     species_name = serializers.ReadOnlyField(source="species.common_name")
     species_scientific_name = serializers.ReadOnlyField(source="species.scientific_name")
@@ -36,7 +36,7 @@ class TreeSerializer:
         ]
         read_only_fields = ["id", "owner", "created_at", "updated_at"]
 
-class TreeDetailSerializer:
+class TreeDetailSerializer(serializers.ModelSerializer):
 
     species_name = serializers.ReadOnlyField(source="species.common_name")
     species_scientific_name = serializers.ReadOnlyField(source="species.scientific_name")
