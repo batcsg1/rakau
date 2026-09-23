@@ -54,6 +54,7 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env          # then fill in the values in the table below
+python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser   # optional — Django admin access
 ```
