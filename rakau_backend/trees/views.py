@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db.models import Count, F, Q
 from rest_framework import viewsets
 from .models import Tree, Species
-from .serializers import TreeSerializer
+from .serializers import SpeciesSerializer, TreeSerializer
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
@@ -43,15 +43,13 @@ class SpeciesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Species.objects.select_related("tree").annotate(
-            tree_count=Count("tree", filter=Q(tree_count__gt=0))
-        ) 
+        queryset = Species.objects.annotate(tree_count=Count("trees"))
         return queryset
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return TreeSerializer
-        return TreeSerializer
+            return SpeciesSerializer
+        return SpeciesSerializer
 
     def perform_create(self, serializer):
         serializer.save()
