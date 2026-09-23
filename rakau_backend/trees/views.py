@@ -14,7 +14,7 @@ from .models import Tree, Species
 class TreeViewSet(viewsets.ModelViewSet):
 
     queryset = Tree.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         queryset = Tree.objects.all()

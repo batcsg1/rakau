@@ -58,6 +58,7 @@ class Tree(models.Model):
         on_delete=models.PROTECT,
         related_name="trees",
     )
+    is_present = models.BooleanField(default=True)
     latitude = models.FloatField(
         validators=[MinValueValidator(-90), MaxValueValidator(90)],
     )
