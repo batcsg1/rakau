@@ -23,7 +23,11 @@ class TreeSerializer(serializers.ModelSerializer):
 
     species_name = serializers.ReadOnlyField(source="species.common_name")
     species_scientific_name = serializers.ReadOnlyField(source="species.scientific_name")
-    species_slug = serializers.ReadOnlyField(source="species.slug")
+    species_slug = serializers.SlugRelatedField(
+        source="species",
+        slug_field="slug",
+        queryset=Species.objects.filter(is_active=True),
+    )
     
     class Meta:
         model = Tree
