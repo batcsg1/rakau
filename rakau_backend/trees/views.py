@@ -44,7 +44,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Species.objects.select_related("tree").annotate(
-            tree_count=Count("tree", filter=Q(tree__status="confirmed"))
+            tree_count=Count("tree", filter=Q(tree_count__gt=0))
         ) 
         return queryset
 
