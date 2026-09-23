@@ -18,9 +18,14 @@ class TreeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Tree.objects.all()
-        species = self.request.query_params.get("species")
-        if species:
-            queryset = queryset.filter(species=species)
+        params = self.request.query_params
+
+        if species := params.get("species_slug"):
+            queryset = queryset.filter(species__slug=species)
+        if condition := params.get("condition"):
+            queryset = queryset.filter(condition=condition)
+        if (present := params.get("is_present")) is not None:
+            queryset = queryset.filter(is_present=present.lower() == "true")
         return queryset
 
     def get_serializer_class(self):
