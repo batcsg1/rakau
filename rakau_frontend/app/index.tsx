@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, ImageBackground, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 
@@ -38,7 +38,13 @@ export default function HomeScreen() {
         contentContainerClassName="pb-12"
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-canopy px-6 pb-10 pt-8">
+        <ImageBackground
+          source={require("../assets/Kauri_Forest.jpg")}
+          resizeMode="cover"
+          className="px-6 pb-10 pt-8"
+        >
+          {/* Darkens the busy forest photo so the white text stays readable */}
+          <View className="absolute inset-0 bg-black/50" />
           <Image
             source={require("../assets/rakau-badge-green-transparent.png")}
             className="h-28 w-28"
@@ -52,7 +58,7 @@ export default function HomeScreen() {
             groups and tree enthusiasts build a living catalogue of New
             Zealand's native and exotic trees.
           </Text>
-        </View>
+        </ImageBackground>
 
         <View className="px-6 pt-6">
           <Text className="text-xl font-iosevka-semibold text-bark">
