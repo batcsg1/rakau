@@ -1,12 +1,5 @@
 # App Documentation
 
-<!--
-Required contents (from the brief): project description (app concept); setup
-instructions; React Native development/build instructions; a note of each
-versioned release/tag (at least one per sprint) with instructions for running
-that release locally. Maintain this throughout the project. Replace every TODO.
--->
-
 ## Project description
 
 Rākau is a mobile app for recording and browsing New Zealand's native and exotic
@@ -35,14 +28,16 @@ consumes is documented in `api-documentation.md`.
 
 Prerequisites:
 
-- Node.js TODO (e.g. 20.x LTS)
-- npm TODO
+- Node.js v20.19.2
+- `npm` Node Package Manager
 - Expo tooling via `npx expo`
 - Expo Go on a physical device, or an Android/iOS emulator
 
 ```bash
-git clone <repo-url>
-cd <repo>/client              # TODO: confirm client directory name
+# Clone the project branch
+git clone -b project https://github.com/otago-polytechnic-bit-courses/s2-26-samuel-batchelor-id608001 rakau
+
+cd rakau/rakau_frontend             # TODO: confirm client directory name
 npm install
 cp .env.example .env          # set the API base URL (see below)
 ```
@@ -51,7 +46,7 @@ Environment variables:
 
 | Name | Purpose | Example |
 |---|---|---|
-| `EXPO_PUBLIC_API_URL` | Base URL of the Django API | `http://192.168.x.x:8000/api` |
+| `EXPO_PUBLIC_API_URL` | Base URL of the Django API | `http://<ip_adress>:8000/api` |
 | TODO | | |
 
 On a physical device the API URL must be your machine's LAN IP, not `localhost`.
@@ -61,8 +56,10 @@ On a physical device the API URL must be your machine's LAN IP, not `localhost`.
 ```bash
 npx expo start               # opens the Expo dev tools
 # a = Android emulator, i = iOS simulator, w = web, or scan the QR with Expo Go
-```
 
+# Run the project on an Android Studio based emulator
+npm run android
+```
 - Native prebuild steps (`npx expo prebuild`): TODO — only if native modules require it
 - Production build (`eas build`, etc.): TODO — not required by the brief; local run is sufficient
 
