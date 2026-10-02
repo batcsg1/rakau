@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 
@@ -39,9 +39,12 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="bg-canopy px-6 pb-10 pt-8">
-          <Text className="text-5xl">🌳</Text>
-          <Text className="mt-4 text-4xl font-iosevka-bold text-white">Rākau</Text>
-          <Text className="mt-2 text-lg text-white/90 font-iosevka">
+          <Image
+            source={require("../assets/rakau-badge-green-transparent.png")}
+            className="h-28 w-28"
+            accessibilityLabel="Rākau"
+          />
+          <Text className="mt-4 text-lg text-white/90 font-iosevka">
             Record. Discover. Protect Aotearoa's trees.
           </Text>
           <Text className="mt-4 text-base leading-6 text-white/80 font-iosevka">
