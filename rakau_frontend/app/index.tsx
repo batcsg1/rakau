@@ -1,6 +1,7 @@
 import { Image, ImageBackground, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Image as ExpoImage } from "expo-image";
 
 type Feature = {
   emoji: string;
@@ -33,6 +34,14 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-sand">
       <StatusBar style="dark" />
+      {/* expo-image is used here because React Native's Image can't decode AVIF on Android */}
+      <ExpoImage
+        source={require("../assets/Vintage_NewZealandMap.avif")}
+        contentFit="cover"
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+      />
+      {/* Fades the busy map so the headings and buttons stay readable */}
+      <View className="absolute inset-0 bg-sand/70" />
       <ScrollView
         className="flex-1"
         contentContainerClassName="pb-12"
