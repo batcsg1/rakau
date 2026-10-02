@@ -44,7 +44,7 @@ The user will be able to navigate across different screens using the Navigation 
 ### Design Choices
 
 #### Typography
-I chose IBM Plex Sans because of its unique ultra-condensed design, high-density glyph support, and because it is my main desktop font.
+I chose Iosevka Nerd Font because of its unique ultra-condensed design, high-density glyph support, and because it is my main desktop font.
 
 - Font: Iosevka Nerd Font', sans-serif
 - Import: https://github.com/Iosevka-NerdFont/
