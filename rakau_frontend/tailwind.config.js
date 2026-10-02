@@ -10,6 +10,12 @@ module.exports = {
         canopy: "#1B5E20",
         sand: "#F5F1E8",
       },
+      // Each weight is a separate family: React Native can't pick weights of a custom font via fontWeight
+      fontFamily: {
+        iosevka: ["Iosevka-Regular"],
+        "iosevka-semibold": ["Iosevka-SemiBold"],
+        "iosevka-bold": ["Iosevka-Bold"],
+      },
     },
   },
   plugins: [],
