@@ -22,12 +22,6 @@ const FEATURES: Feature[] = [
       "Discover trees recorded by others, from your street to across Aotearoa.",
   },
   {
-    emoji: "📋",
-    title: "Maintenance Records",
-    description:
-      "Keep a detailed history of health reports and arborist work on each tree.",
-  },
-  {
     emoji: "🔎",
     title: "Filter & Discover",
     description:
