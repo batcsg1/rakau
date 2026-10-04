@@ -34,7 +34,7 @@ class TreeSerializer(serializers.ModelSerializer):
         fields = [
             "id", "owner",
             "species_name", "species_scientific_name", "species_slug",
-            "latitude", "longitude", "condition", "is_present",
+            "latitude", "longitude", "region", "condition", "is_present",
             "height_m", "trunk_girth_cm", "crown_spread_m",
             "created_at", "updated_at",
         ]
@@ -50,7 +50,7 @@ class TreeDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id", "owner",
             "species_name", "species_scientific_name",
-            "latitude", "longitude", "condition", "is_present",
+            "latitude", "longitude", "region", "condition", "is_present",
             "height_m", "trunk_girth_cm", "crown_spread_m",
             "created_at", "updated_at",
         ]

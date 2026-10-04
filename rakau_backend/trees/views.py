@@ -24,6 +24,8 @@ class TreeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(species__slug=species)
         if condition := params.get("condition"):
             queryset = queryset.filter(condition=condition)
+        if region := params.get("region"):
+            queryset = queryset.filter(region=region)
         if (present := params.get("is_present")) is not None:
             queryset = queryset.filter(is_present=present.lower() == "true")
         return queryset
