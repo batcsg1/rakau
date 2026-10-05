@@ -36,8 +36,8 @@ export async function request(
 
   const response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  // Clear the token once it expires
-  if (response.status === 401) {
+  // Clear the token once it expires; a 401 without a token just means the endpoint needs login
+  if (response.status === 401 && token) {
     await clearToken();
     router.replace("/login");
   }

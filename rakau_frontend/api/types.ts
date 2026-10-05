@@ -59,7 +59,7 @@ export interface Species {
 // A tree from GET /api/trees/ and GET /api/trees/{id}/
 export interface Tree {
   id: number;
-  owner: string | null;       // owner's username, read-only; null for trees with no owner
+  owner?: string;             // owner's username, read-only; DRF omits it when the tree has no owner
   species_name: string;
   species_scientific_name: string;
   species_slug: string;
