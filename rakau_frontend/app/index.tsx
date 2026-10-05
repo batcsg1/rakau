@@ -2,6 +2,7 @@ import { Image, ImageBackground, Pressable, ScrollView, Text, View } from "react
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Image as ExpoImage } from "expo-image";
+import { router } from "expo-router";
 
 type Feature = {
   emoji: string;
@@ -99,7 +100,10 @@ export default function HomeScreen() {
                 Get Started
               </Text>
             </Pressable>
-            <Pressable className="items-center rounded-full border border-leaf px-6 py-4 active:opacity-70">
+            <Pressable
+              onPress={() => router.push("/trees")}
+              className="items-center rounded-full border border-leaf px-6 py-4 active:opacity-70"
+            >
               <Text className="text-base font-iosevka-semibold text-leaf">
                 Browse the Catalogue
               </Text>
