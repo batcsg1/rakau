@@ -14,11 +14,10 @@ development.
 
 | Tag | Sprint | Date | Summary |
 |---|---|---|---|
-| v0.1.0 | Sprint 1 | TODO | TODO |
+| v0.1.0 | Sprint 1 | 2026-10-12 | Species/Tree API with CRUD + filtering; Expo client with home screen and filterable tree catalogue |
 | v0.2.0 | Sprint 2 | TODO | TODO |
 | v0.3.0 | Sprint 3 | TODO | TODO |
 | v0.4.0 | UAT Sprint | TODO | TODO (includes UAT evidence bundle) |
-| v1.0.0 | Sprint 1 | 2026-10-12 | Phase 1 design docs complete; Django backend scaffolded with Species/Tree models and serializers |
 
 ---
 
@@ -26,49 +25,87 @@ development.
 
 **Delivered**
 
-*Phase 1: design and planning*
-- App concept for Rākau, plus a project roadmap and the project description in `README.md`.
-- Backlog with 10 user stories ranked by MoSCoW, including acceptance criteria, risks, assumptions and dependencies.
-- System design with diagrams for features 1 and 2. Any user can view every tree, but only the tree's owner can edit or delete it.
-- API design, wireframes for all 9 screens, and a design reflection.
-- Docs reorganised into `Phase 1/` to `Phase 4/` folders. Templates added for the API and app documentation.
+*Design and planning (Phase 1)*
+- App concept, project roadmap and project description in `README.md`.
+- Backlog of 10 user stories ranked by MoSCoW, with acceptance criteria, risks, assumptions and dependencies.
+- System design, API design, wireframes for all 9 screens, and a design reflection.
+- Sprint plans for Sprint 1 and Sprint 2 in `Phase 2/14-sprint-plans.md`.
 
-*Phase 2: API foundations (story 1, "Add a tree", groundwork)*
-- Django project `rakau_backend` created, with a `trees` app.
-- `Species` model: common and scientific name, native flag, active flag, and an auto-generated unique slug. Scientific names are unique regardless of case.
-- `Tree` model: owner, species, latitude/longitude with range validation, condition (healthy / stressed / diseased / dead), and optional height, trunk girth and crown spread with validation. It also has timestamps and a uniqueness constraint on owner + species + location.
-- `SpeciesSerializer`, `SpeciesDetailSerializer` (with `tree_count`), `TreeSerializer` and `TreeDetailSerializer` drafted.
-- Backend `requirements.txt`, `.env.example` and `.gitignore` added. API setup instructions started in `api-documentation.md`.
+*API (`rakau_backend`)*
+- REQ-01 (Add a tree), backend groundwork:
+  - `Species` model: common and scientific name, native flag, active flag, and an auto-generated unique slug. Scientific names must be unique regardless of case.
+  - `Tree` model: owner, species, latitude/longitude with range checks, condition (healthy / stressed / diseased / dead), and present/removed status (`is_present`).
+  - `Tree` also has a region (one of New Zealand's 16 regions) and optional height, trunk girth and crown spread, each with validation.
+  - `Tree` has timestamps and a uniqueness constraint on owner + species + location.
+  - Three migrations: `0001_initial`, `0002_tree_is_present` and `0003_tree_region`.
+- REST endpoints under `/api/` using DRF routers:
+  - `/api/trees/` and `/api/trees/{id}/`: full CRUD. Anyone can read; writes need authentication. A new tree's species is set by `species_slug`.
+  - `/api/species/` and `/api/species/{id}/`: full CRUD. Every request, including reads, needs authentication.
+- REQ-03 / REQ-04 groundwork: `GET /api/trees/` can be filtered with the query parameters `species_slug`, `condition`, `region` and `is_present`. Filters can be combined.
+
+*Client (`rakau_frontend`, Expo Router + NativeWind)*
+- Home screen with the Rākau logo, a kauri forest hero image, a vintage NZ map background, feature cards, and buttons for "Get Started" and "Browse the Catalogue". The UI uses the Iosevka Nerd Font.
+- Tree catalogue screen (`/trees`) lists every recorded tree. Users can filter by species, region, condition and present/removed status (filter chips with an "All" option), pull to refresh, and clear all filters. It has loading, error/retry and empty states.
+- API layer (`api/`):
+  - Configurable base URL (`EXPO_PUBLIC_API_URL`).
+  - A request helper that adds a `Bearer` token and redirects to login on a `401` when a token was sent.
+  - DRF errors turned into per-field form errors.
+  - Typed functions for trees and species, and JWT storage in `expo-secure-store`.
 
 **Known issues**
-- The `trees` app (and `rest_framework`) are not yet in `INSTALLED_APPS`, so the models are not picked up by Django.
-- The `trees` app has no migrations yet.
-- The serializers don't inherit from `serializers.ModelSerializer`, so they won't work as DRF serializers yet.
-- `TreeSerializer` lists an `is_present` field that the `Tree` model doesn't have.
-- No API endpoints yet: `urls.py` only exposes `/admin/`, and `views.py` / `tests.py` are empty.
-- `settings.py` doesn't read the `DJANGO_*` variables from `.env` yet. The secret key, debug flag and allowed hosts are hard-coded.
-- There is no React Native client yet.
+- **No authentication endpoint yet.** The client's `login()` posts to `/api/token/`, but SimpleJWT is installed without being configured or routed. Because of this:
+  - Users can't log in from the app.
+  - The only way to authenticate is a Django session, logged in through `/admin/` and then using the DRF browsable API.
+- The "Get Started" button does nothing yet, and there's no `/login` screen for the 401 redirect to go to.
+- **REQ-01 not complete:**
+  - There's no Add Tree screen in the client.
+  - The API doesn't set `owner` from the logged-in user when a tree is created, so every new tree has no owner.
+- **REQ-02 not complete:** `GET /api/trees/mine/` (#9) doesn't exist, and nor does a My Trees screen. The client's `getMyTrees()` will get a 404.
+- **No ownership permissions (#21):** any logged-in user can edit or delete any tree.
+- **Species need a login to read.** Because of this, the catalogue hides the species filter for visitors who aren't logged in. (`SpeciesViewSet` uses `IsAuthenticated`.)
+- **Invalid filter values aren't rejected.** An unknown `condition` or `region` returns an empty list instead of `400`, and any `is_present` value other than `true` is treated as `false`.
+- Lists aren't paginated yet.
+- `SpeciesDetailSerializer`/`TreeDetailSerializer` are unused. The `tree_count` annotation on species is computed but never returned.
+- Models aren't registered in the Django admin. There's no seed data, so species have to be created through the API.
+- **Settings are hard-coded.** `settings.py` doesn't read `.env`, so the secret key and `DEBUG` are hard-coded. `ALLOWED_HOSTS` is empty, so only `localhost`/`127.0.0.1` are accepted, and a phone on the LAN will get `400 Bad Request`.
+- `django-cors-headers` is installed but not enabled, so the web build of the client (`npm run web`) is blocked by CORS.
+- No automated tests (`trees/tests.py` is empty) and no CI yet.
 
 **Run the API locally (from this tag)**
 ```bash
 git checkout v0.1.0
 cd rakau_backend
 python -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
+source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env          # fill in values (not yet read by settings.py)
 python manage.py migrate
-python manage.py runserver    # http://127.0.0.1:8000/admin/
+python manage.py createsuperuser  # needed to log in and add species via /admin/ + /api/species/
+python manage.py runserver        # API at http://127.0.0.1:8000/api/
 ```
 
 **Run the client locally (from this tag)**
-- Not applicable. The client has not been started in this release.
+```bash
+cd rakau_frontend
+npm install
+cp .env.example .env              # EXPO_PUBLIC_API_URL=http://127.0.0.1:8000/api
+npx expo start                    # i = iOS simulator, a = Android emulator
+```
+- On the Android emulator, run `adb reverse tcp:8000 tcp:8000` so that `127.0.0.1` reaches the API.
+- A physical device can't reach the API yet, because `ALLOWED_HOSTS` is empty (see Known issues).
 
 **Technical notes**
-- Stack: Django 6.1, Django REST Framework 3.18, SimpleJWT 5.5.1, django-cors-headers 4.9, django-environ 0.14, ruff 0.16.5. SQLite for local development.
-- Migrations added: none for `trees` yet (only Django's built-in migrations).
-- New env vars: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CORS_ALLOWED_ORIGINS` (in `.env.example`).
-- Breaking changes: none. This is the first backend release. The `fittrack-test-app` scratch project was removed at v0.1.0.
+- API stack: Python, Django 6.1, Django REST Framework 3.18 and SQLite. SimpleJWT 5.5.1, django-cors-headers 4.9 and django-environ 0.14 are installed but not wired up yet. ruff is used for linting.
+- Client stack:
+  - Expo SDK 57, React Native 0.86, React 19.2 and TypeScript 6.0.
+  - Expo Router for file-based routing (the entry point is `expo-router/entry`).
+  - NativeWind 4 / Tailwind 3 for styling.
+  - `expo-image` for the AVIF map, because React Native's `Image` can't decode AVIF on Android.
+  - `expo-secure-store` for tokens.
+- Migrations added: `trees/0001_initial`, `0002_tree_is_present`, `0003_tree_region`. `manage.py makemigrations --check` reports no pending changes.
+- New env vars:
+  - API: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_CORS_ALLOWED_ORIGINS` in `.env.example`. They aren't read yet.
+  - Client: `EXPO_PUBLIC_API_URL`. If it isn't set, the client uses `http://127.0.0.1:8000/api`.
+- Breaking changes: none. This is the first release.
 
 ---
 
