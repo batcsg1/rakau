@@ -45,6 +45,26 @@ class Condition(models.TextChoices):
     DISEASED = "diseased", "Diseased"
     DEAD = "dead", "Dead"
 
+# The 16 regions of New Zealand
+
+class Region(models.TextChoices):
+    NORTHLAND = "northland", "Northland"
+    AUCKLAND = "auckland", "Auckland"
+    WAIKATO = "waikato", "Waikato"
+    BAY_OF_PLENTY = "bay-of-plenty", "Bay of Plenty"
+    GISBORNE = "gisborne", "Gisborne"
+    HAWKES_BAY = "hawkes-bay", "Hawke's Bay"
+    TARANAKI = "taranaki", "Taranaki"
+    MANAWATU_WHANGANUI = "manawatu-whanganui", "Manawatū-Whanganui"
+    WELLINGTON = "wellington", "Wellington"
+    TASMAN = "tasman", "Tasman"
+    NELSON = "nelson", "Nelson"
+    MARLBOROUGH = "marlborough", "Marlborough"
+    WEST_COAST = "west-coast", "West Coast"
+    CANTERBURY = "canterbury", "Canterbury"
+    OTAGO = "otago", "Otago"
+    SOUTHLAND = "southland", "Southland"
+
 class Tree(models.Model):
     owner = models.ForeignKey(
         User,
@@ -58,6 +78,7 @@ class Tree(models.Model):
         on_delete=models.PROTECT,
         related_name="trees",
     )
+    is_present = models.BooleanField(default=True)
     latitude = models.FloatField(
         validators=[MinValueValidator(-90), MaxValueValidator(90)],
     )
@@ -67,6 +88,12 @@ class Tree(models.Model):
     condition = models.CharField(
         max_length=16,
         choices=Condition.choices,
+    )
+    region = models.CharField(
+        max_length=32,
+        choices=Region.choices,
+        blank=True,
+        db_index=True,
     )
     height_m = models.DecimalField(
         max_digits=5,

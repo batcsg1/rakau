@@ -42,13 +42,19 @@ source venv/Scripts/activate
 
 # On Fish
 source venv/bin/activate.fish
+```
 
+- Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
-- Setup environment and setup database
+
+- Setup environment, setup database and apply database migrations
 
 ```bash
 cp .env.example .env          # then fill in the values in the table below
+python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser   # optional — Django admin access
 ```
@@ -67,16 +73,26 @@ placeholder values.
 
 ## Development instructions
 
+- Activate the virtual environment
+
 ```bash
 # On Powershell
 source venv/Scripts/activate
 
 # On Fish
 source venv/bin/activate.fish
+```
 
-python manage.py runserver          # http://127.0.0.1:8000
-python manage.py makemigrations     # after changing models
-python manage.py migrate
+- Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+- Run the development server
+
+```bash
+python manage.py runserver 0.0.0.0:8000
 ```
 
 - API base URL (dev): `http://127.0.0.1:8000/api/`
@@ -84,13 +100,24 @@ python manage.py migrate
 
 ## Testing instructions
 
+- Activate the virtual environment
+
 ```bash
 # On Powershell
 source venv/Scripts/activate
 
 # On Fish
 source venv/bin/activate.fish
+```
 
+- Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+- Run the tests
+
+```bash
 python manage.py test             
 ```
 
