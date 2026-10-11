@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from .models import Tree, Species
 from .serializers import SpeciesSerializer, TreeSerializer
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 
 from .models import Tree, Species
 
@@ -14,7 +14,7 @@ from .models import Tree, Species
 class TreeViewSet(viewsets.ModelViewSet):
 
     queryset = Tree.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly]
 
     def get_queryset(self):
         queryset = Tree.objects.all()
@@ -36,7 +36,7 @@ class TreeViewSet(viewsets.ModelViewSet):
         return TreeSerializer
 
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(owner=self.request.user)
 
     def perform_update(self, serializer):
         serializer.save()
@@ -47,7 +47,7 @@ class TreeViewSet(viewsets.ModelViewSet):
 class SpeciesViewSet(viewsets.ModelViewSet):
 
     queryset = Species.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = Species.objects.annotate(tree_count=Count("trees"))
