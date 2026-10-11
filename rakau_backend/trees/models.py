@@ -102,10 +102,12 @@ class Tree(models.Model):
         blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(150)],
     )
-    trunk_girth_cm = models.PositiveIntegerField(
+    trunk_girth_cm = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
         null=True,
         blank=True,
-        validators=[MaxValueValidator(3000)],
+        validators=[MinValueValidator(0), MaxValueValidator(3000)],
     )
     crown_spread_m = models.DecimalField(
         max_digits=5,
