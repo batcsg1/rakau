@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from django.db.models import Count, F, Q
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from .models import Tree, Species
+from .pagination import MyTreesPagination
 from .serializers import SpeciesSerializer, TreeSerializer
-from rest_framework import viewsets
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 
 from .models import Tree, Species
@@ -37,6 +39,17 @@ class TreeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    # GET /api/trees/mine/?page=n — the caller's own trees, newest first, 20 per page.
+    # Owner scoping happens in the queryset, so another user's trees can never be returned;
+    # the list filters (condition, region, ...) from get_queryset still apply
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def mine(self, request):
+        queryset = self.get_queryset().filter(owner=request.user).order_by("-created_at")
+        paginator = MyTreesPagination()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = self.get_serializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def perform_update(self, serializer):
         serializer.save()
