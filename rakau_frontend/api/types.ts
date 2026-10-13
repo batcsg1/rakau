@@ -104,3 +104,11 @@ export interface Paginated<T> {
   previous: string | null;
   results: T[];
 }
+
+// The signed-in user from GET /api/auth/me/
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  is_staff: boolean;
+}

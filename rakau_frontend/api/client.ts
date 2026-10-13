@@ -1,26 +1,14 @@
 import { router } from "expo-router";
-import { clearToken, getToken } from "./auth";
+import { clearTokens, getToken, refreshAccessToken } from "./auth";
 import { BASE_URL } from "./config";
 
-// DRF validation errors arrive as { field: ["message", ...] }; other errors as { detail: "..." }
-export type FieldErrors = Record<string, string[]>;
-
-export class ApiError extends Error {
-  status: number;
-  fieldErrors: FieldErrors;
-
-  constructor(message: string, status: number, fieldErrors: FieldErrors = {}) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.fieldErrors = fieldErrors;
-  }
-}
+export { ApiError, toApiError, type FieldErrors } from "./errors";
 
 // Base HTTP helper: attaches auth, resolves the URL, handles 401s
 export async function request(
   path: string,
   options: RequestInit = {},
+  retried = false,
 ): Promise<Response> {
   const token = await getToken();
 
@@ -36,36 +24,16 @@ export async function request(
 
   const response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  // Clear the token once it expires; a 401 without a token just means the endpoint needs login
+  // A 401 without a token just means the endpoint needs login.
+  // With a token, the access token has expired: refresh it once and retry,
+  // and only send the user to login if the refresh token has expired too
   if (response.status === 401 && token) {
-    await clearToken();
+    if (!retried && (await refreshAccessToken())) {
+      return request(path, options, true);
+    }
+    await clearTokens();
     router.replace("/login");
   }
 
   return response;
-}
-
-// Turns a failed response into an ApiError, keeping DRF's per-field messages for forms
-export async function toApiError(
-  response: Response,
-  fallback: string,
-): Promise<ApiError> {
-  let body: unknown = null;
-  try {
-    body = await response.json();
-  } catch {
-    // Non-JSON body (e.g. Django's HTML error page) — fall back to the generic message
-  }
-
-  if (body && typeof body === "object") {
-    const { detail, ...rest } = body as Record<string, unknown>;
-    const fieldErrors: FieldErrors = {};
-    for (const [field, value] of Object.entries(rest)) {
-      fieldErrors[field] = Array.isArray(value) ? value.map(String) : [String(value)];
-    }
-    const message = typeof detail === "string" ? detail : fallback;
-    return new ApiError(message, response.status, fieldErrors);
-  }
-
-  return new ApiError(fallback, response.status);
 }
