@@ -10,11 +10,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 class RegisterSerializer(serializers.ModelSerializer):
     # Required because it's what users log in with
     email = serializers.EmailField()
+    # Optional on Django's User model, but required to sign up
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password"]
+        fields = ["id", "username", "email", "first_name", "last_name", "password"]
 
     def validate_email(self, value):
         # Django doesn't make email unique, so block duplicates here (case-insensitive)
@@ -23,8 +26,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value.lower()
 
     def validate(self, attrs):
-        # Runs AUTH_PASSWORD_VALIDATORS (too common, too similar to the username, etc.)
-        user = User(username=attrs.get("username"), email=attrs.get("email", ""))
+        # Runs AUTH_PASSWORD_VALIDATORS (too common, too similar to the username/name/email, etc.)
+        user = User(
+            username=attrs.get("username"),
+            email=attrs.get("email", ""),
+            first_name=attrs.get("first_name", ""),
+            last_name=attrs.get("last_name", ""),
+        )
         try:
             validate_password(attrs["password"], user)
         except DjangoValidationError as e:
@@ -75,5 +83,5 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "is_staff"]
+        fields = ["id", "username", "email", "first_name", "last_name", "is_staff"]
         read_only_fields = fields
