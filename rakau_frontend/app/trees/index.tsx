@@ -198,7 +198,15 @@ export default function TreesScreen() {
         >
           <Text className="text-base text-leaf font-iosevka-semibold">← Back</Text>
         </Pressable>
-        <Text className="mt-3 text-3xl font-iosevka-bold text-bark">Tree catalogue</Text>
+        <View className="mt-3 flex-row items-center justify-between gap-3">
+          <Text className="text-3xl font-iosevka-bold text-bark">Tree catalogue</Text>
+          <Pressable
+            onPress={() => router.push("/trees/new")}
+            className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
+          >
+            <Text className="text-sm font-iosevka-semibold text-white">+ Add tree</Text>
+          </Pressable>
+        </View>
         <Text className="mt-1 text-sm text-bark/70 font-iosevka">
           Every tree recorded across Aotearoa.
         </Text>
