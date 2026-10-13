@@ -111,6 +111,15 @@ export default function HomeScreen() {
                 Browse the Catalogue
               </Text>
             </Pressable>
+            <Pressable
+              onPress={() => router.push("/login")}
+              className="mt-2 items-center active:opacity-60"
+            >
+              <Text className="text-sm text-bark/70 font-iosevka">
+                Already have an account?{" "}
+                <Text className="text-leaf font-iosevka-semibold">Log in</Text>
+              </Text>
+            </Pressable>
           </View>
         </View>
       </ScrollView>
