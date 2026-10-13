@@ -1,8 +1,8 @@
 import { request, toApiError } from "./client";
 import type { Paginated, Tree, TreeFilters, TreeInput } from "./types";
 
-// Builds "?species_slug=kauri&region=otago" from the filters that are set
-function toQuery(filters: TreeFilters): string {
+// Builds "?species_slug=kauri&region=otago" from the params that are set
+function toQuery(filters: object): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
     if (value !== undefined && value !== "") {
@@ -25,9 +25,12 @@ export async function getTrees(filters: TreeFilters = {}): Promise<Tree[]> {
 }
 
 // Get the signed-in user's Trees, newest first, 20 per page
-// Needs GET /api/trees/mine/ (#9), which the API doesn't have yet
-export async function getMyTrees(page = 1): Promise<Paginated<Tree>> {
-  const response = await request(`/trees/mine/?page=${page}`);
+export async function getMyTrees(
+  page = 1,
+  filters: TreeFilters = {},
+): Promise<Paginated<Tree>> {
+  const query = toQuery({ ...filters, page });
+  const response = await request(`/trees/mine/${query}`);
 
   if (!response.ok) {
     throw await toApiError(response, `Failed to fetch your trees: ${response.status}`);

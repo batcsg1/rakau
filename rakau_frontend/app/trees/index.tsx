@@ -200,12 +200,20 @@ export default function TreesScreen() {
         </Pressable>
         <View className="mt-3 flex-row items-center justify-between gap-3">
           <Text className="text-3xl font-iosevka-bold text-bark">Tree catalogue</Text>
-          <Pressable
-            onPress={() => router.push("/trees/new")}
-            className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
-          >
-            <Text className="text-sm font-iosevka-semibold text-white">+ Add tree</Text>
-          </Pressable>
+          <View className="flex-row gap-2">
+            <Pressable
+              onPress={() => router.push("/trees/mine")}
+              className="rounded-full border border-leaf px-4 py-2 active:opacity-70"
+            >
+              <Text className="text-sm font-iosevka-semibold text-leaf">My trees</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/trees/new")}
+              className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
+            >
+              <Text className="text-sm font-iosevka-semibold text-white">+ Add</Text>
+            </Pressable>
+          </View>
         </View>
         <Text className="mt-1 text-sm text-bark/70 font-iosevka">
           Every tree recorded across Aotearoa.

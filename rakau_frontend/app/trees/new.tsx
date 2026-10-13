@@ -151,7 +151,7 @@ export default function NewTreeScreen() {
     setSubmitting(true);
     try {
       const tree = await createTree(input);
-      router.replace(`/trees/${tree.id}`);
+      router.replace({ pathname: "/trees/mine", params: { added: String(tree.id) } });
     } catch (e) {
       if (e instanceof ApiError) {
         const { non_field_errors, ...rest } = e.fieldErrors;
