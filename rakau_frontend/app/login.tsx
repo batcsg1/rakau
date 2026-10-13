@@ -10,13 +10,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 import { login } from "../api/auth";
 import { ApiError, type FieldErrors } from "../api/errors";
+import { safeNext } from "../api/navigation";
 import { FormField } from "../components/FormField";
 
 export default function LoginScreen() {
+  // Set when a protected screen sent the user here, e.g. /login?next=/trees/new
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -29,7 +32,7 @@ export default function LoginScreen() {
     setFieldErrors({});
     try {
       await login(email.trim(), password);
-      router.replace("/trees");
+      router.replace(safeNext(next));
     } catch (e) {
       if (e instanceof ApiError) {
         setFieldErrors(e.fieldErrors);
@@ -104,7 +107,7 @@ export default function LoginScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => router.replace("/register")}
+            onPress={() => router.replace({ pathname: "/register", params: next ? { next } : {} })}
             className="mt-6 items-center active:opacity-60"
           >
             <Text className="text-sm text-bark/70 font-iosevka">

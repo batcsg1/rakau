@@ -10,13 +10,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 import { register } from "../api/auth";
 import { ApiError, type FieldErrors } from "../api/errors";
+import { safeNext } from "../api/navigation";
 import { FormField } from "../components/FormField";
 
 export default function RegisterScreen() {
+  // Set when a protected screen sent the user here, e.g. /login?next=/trees/new
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,8 +41,14 @@ export default function RegisterScreen() {
     setSubmitting(true);
     setFieldErrors({});
     try {
-      await register(username.trim(), email.trim(), password);
-      router.replace("/trees");
+      await register({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        username: username.trim(),
+        email: email.trim(),
+        password,
+      });
+      router.replace(safeNext(next));
     } catch (e) {
       if (e instanceof ApiError) {
         setFieldErrors(e.fieldErrors);
@@ -71,6 +82,30 @@ export default function RegisterScreen() {
           </Text>
 
           <View className="mt-8 gap-4">
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <FormField
+                  label="First name"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                  autoComplete="given-name"
+                  textContentType="givenName"
+                  errors={fieldErrors.first_name}
+                />
+              </View>
+              <View className="flex-1">
+                <FormField
+                  label="Last name"
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                  autoComplete="family-name"
+                  textContentType="familyName"
+                  errors={fieldErrors.last_name}
+                />
+              </View>
+            </View>
             <FormField
               label="Username"
               value={username}
@@ -125,7 +160,15 @@ export default function RegisterScreen() {
 
           <Pressable
             onPress={onSubmit}
-            disabled={submitting || !username || !email || !password || !confirmPassword}
+            disabled={
+              submitting ||
+              !firstName.trim() ||
+              !lastName.trim() ||
+              !username ||
+              !email ||
+              !password ||
+              !confirmPassword
+            }
             className="mt-8 items-center rounded-full bg-leaf px-6 py-4 active:opacity-80 disabled:opacity-50"
           >
             {submitting ? (
@@ -138,7 +181,7 @@ export default function RegisterScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => router.replace("/login")}
+            onPress={() => router.replace({ pathname: "/login", params: next ? { next } : {} })}
             className="mt-6 items-center active:opacity-60"
           >
             <Text className="text-sm text-bark/70 font-iosevka">
