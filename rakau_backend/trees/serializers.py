@@ -40,6 +40,31 @@ class TreeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "owner", "created_at", "updated_at"]
 
+    def validate(self, attrs):
+        # DRF skips the model's unique_tree_per_owner_location check because owner is
+        # read-only, so check it here to return a 400 instead of a database error
+        request = self.context.get("request")
+        owner = self.instance.owner if self.instance else getattr(request, "user", None)
+        if owner is None or not owner.is_authenticated:
+            return attrs
+
+        def current(field):
+            return attrs.get(field, getattr(self.instance, field, None))
+
+        duplicates = Tree.objects.filter(
+            owner=owner,
+            species=current("species"),
+            latitude=current("latitude"),
+            longitude=current("longitude"),
+        )
+        if self.instance:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise serializers.ValidationError(
+                "You've already recorded this species at this location."
+            )
+        return attrs
+
 class TreeDetailSerializer(serializers.ModelSerializer):
 
     species_name = serializers.ReadOnlyField(source="species.common_name")
