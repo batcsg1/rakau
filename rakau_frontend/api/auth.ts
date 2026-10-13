@@ -50,19 +50,23 @@ export async function login(email: string, password: string): Promise<User> {
   return data.user;
 }
 
+export interface RegisterDetails {
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  password: string;
+}
+
 // Creates the account, then logs straight in so the user doesn't have to re-enter details
-export async function register(
-  username: string,
-  email: string,
-  password: string,
-): Promise<User> {
-  const response = await post("/auth/register/", { username, email, password });
+export async function register(details: RegisterDetails): Promise<User> {
+  const response = await post("/auth/register/", details);
 
   if (!response.ok) {
     throw await toApiError(response, "Could not create your account");
   }
 
-  return login(email, password);
+  return login(details.email, details.password);
 }
 
 export async function logout(): Promise<void> {
