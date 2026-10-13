@@ -95,7 +95,10 @@ export default function HomeScreen() {
           </View>
 
           <View className="mt-8 gap-3">
-            <Pressable className="items-center rounded-full bg-leaf px-6 py-4 active:opacity-80">
+            <Pressable
+              onPress={() => router.push("/register")}
+              className="items-center rounded-full bg-leaf px-6 py-4 active:opacity-80"
+            >
               <Text className="text-base font-iosevka-semibold text-white">
                 Get Started
               </Text>
