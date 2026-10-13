@@ -22,6 +22,7 @@ import {
   type Tree,
   type TreeFilters,
 } from "../../api/types";
+import { ConditionBadge } from "../../components/ConditionBadge";
 
 type Option<T> = { value: T; label: string };
 
@@ -39,13 +40,6 @@ const STATUS_OPTIONS: Option<boolean>[] = [
   { value: true, label: "Present" },
   { value: false, label: "Removed" },
 ];
-
-const CONDITION_BADGE: Record<Condition, string> = {
-  healthy: "bg-leaf",
-  stressed: "bg-amber-600",
-  diseased: "bg-red-700",
-  dead: "bg-stone-500",
-};
 
 // One labelled row of horizontally scrolling chips, with "All" to clear that filter
 function FilterRow<T>({
@@ -97,7 +91,10 @@ function FilterRow<T>({
 
 function TreeCard({ tree }: { tree: Tree }) {
   return (
-    <View className="mx-6 rounded-2xl border border-leaf/20 bg-white p-4 shadow-sm">
+    <Pressable
+      onPress={() => router.push(`/trees/${tree.id}`)}
+      className="mx-6 rounded-2xl border border-leaf/20 bg-white p-4 shadow-sm active:opacity-80"
+    >
       <View className="flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <Text className="text-base font-iosevka-semibold text-bark">
@@ -107,11 +104,7 @@ function TreeCard({ tree }: { tree: Tree }) {
             {tree.species_scientific_name}
           </Text>
         </View>
-        <View className={`rounded-full px-3 py-1 ${CONDITION_BADGE[tree.condition]}`}>
-          <Text className="text-xs font-iosevka-semibold text-white">
-            {CONDITION_LABELS[tree.condition]}
-          </Text>
-        </View>
+        <ConditionBadge condition={tree.condition} />
       </View>
 
       <View className="mt-3 flex-row flex-wrap gap-x-4 gap-y-1">
@@ -132,7 +125,7 @@ function TreeCard({ tree }: { tree: Tree }) {
         Recorded {new Date(tree.created_at).toLocaleDateString("en-NZ")}
         {tree.owner ? ` by ${tree.owner}` : ""}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
