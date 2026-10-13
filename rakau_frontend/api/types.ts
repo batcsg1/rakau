@@ -68,9 +68,10 @@ export interface Tree {
   region: Region | "";        // blank is allowed on the model
   condition: Condition;
   is_present: boolean;
-  height_m: string | null;    // DecimalField — DRF sends decimals as strings
-  trunk_girth_cm: number | null;
-  crown_spread_m: string | null; // DecimalField — DRF sends decimals as strings
+  // DecimalFields — DRF sends decimals as strings, e.g. "30.00"
+  height_m: string | null;
+  trunk_girth_cm: string | null;
+  crown_spread_m: string | null;
   created_at: string;         // ISO 8601 string, not Date
   updated_at: string;
 }
