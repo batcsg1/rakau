@@ -1,6 +1,7 @@
-from django.db.models import Count, F, Q
 from rest_framework import serializers
-from .models import Tree, Species
+
+from .models import Species, Tree
+
 
 class SpeciesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,10 +14,8 @@ class SpeciesDetailSerializer(serializers.ModelSerializer):
     tree_count = serializers.IntegerField(read_only=True)
 
     class Meta(SpeciesSerializer.Meta):
-        fields = SpeciesSerializer.Meta.fields + ["tree_count"]
+        fields = [*SpeciesSerializer.Meta.fields, "tree_count"]
 
-    def get_tree_count(self, obj):
-        return getattr(obj, "tree_count", None)
 
 class TreeSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
@@ -28,15 +27,25 @@ class TreeSerializer(serializers.ModelSerializer):
         slug_field="slug",
         queryset=Species.objects.filter(is_active=True),
     )
-    
+
     class Meta:
         model = Tree
         fields = [
-            "id", "owner",
-            "species_name", "species_scientific_name", "species_slug",
-            "latitude", "longitude", "region", "condition", "is_present",
-            "height_m", "trunk_girth_cm", "crown_spread_m",
-            "created_at", "updated_at",
+            "id",
+            "owner",
+            "species_name",
+            "species_scientific_name",
+            "species_slug",
+            "latitude",
+            "longitude",
+            "region",
+            "condition",
+            "is_present",
+            "height_m",
+            "trunk_girth_cm",
+            "crown_spread_m",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = ["id", "owner", "created_at", "updated_at"]
 
@@ -64,20 +73,3 @@ class TreeSerializer(serializers.ModelSerializer):
                 "You've already recorded this species at this location."
             )
         return attrs
-
-class TreeDetailSerializer(serializers.ModelSerializer):
-
-    species_name = serializers.ReadOnlyField(source="species.common_name")
-    species_scientific_name = serializers.ReadOnlyField(source="species.scientific_name")
-
-    class Meta:
-        model = Tree
-        fields = [
-            "id", "owner",
-            "species_name", "species_scientific_name",
-            "latitude", "longitude", "region", "condition", "is_present",
-            "height_m", "trunk_girth_cm", "crown_spread_m",
-            "created_at", "updated_at",
-        ]
-        read_only_fields = ["id", "owner", "created_at", "updated_at", "owner"]
-

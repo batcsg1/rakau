@@ -1,10 +1,19 @@
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.text import slugify
 from django.db.models.functions import Lower
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.text import slugify
 
-# Create your models here.
+# Coordinate bounds; the client's Add Tree form checks the same ranges
+MIN_LATITUDE, MAX_LATITUDE = -90, 90
+MIN_LONGITUDE, MAX_LONGITUDE = -180, 180
+
+# Upper limits that catch typos (e.g. girth entered in mm) rather than real-world records
+MAX_HEIGHT_M = 150
+MAX_TRUNK_GIRTH_CM = 3000
+MAX_CROWN_SPREAD_M = 200
+
+
 class Species(models.Model):
     common_name = models.CharField(max_length=100)
     scientific_name = models.CharField(max_length=100)
@@ -16,7 +25,7 @@ class Species(models.Model):
         ordering = ["common_name"]
         verbose_name_plural = "species"
         constraints = [
-            #Case-insensitive Allows lower case and normal case to count as the same species.
+            # Case-insensitive: allows lower case and normal case to count as the same species.
             models.UniqueConstraint(
                 Lower("scientific_name"),
                 name="unique_species_scientific_name_ci",
@@ -37,16 +46,16 @@ class Species(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
-# A model for different tree conditions
 
+# The health states a tree can be recorded in
 class Condition(models.TextChoices):
     HEALTHY = "healthy", "Healthy"
     STRESSED = "stressed", "Stressed"
     DISEASED = "diseased", "Diseased"
     DEAD = "dead", "Dead"
 
-# The 16 regions of New Zealand
 
+# The 16 regions of New Zealand
 class Region(models.TextChoices):
     NORTHLAND = "northland", "Northland"
     AUCKLAND = "auckland", "Auckland"
@@ -65,6 +74,7 @@ class Region(models.TextChoices):
     OTAGO = "otago", "Otago"
     SOUTHLAND = "southland", "Southland"
 
+
 class Tree(models.Model):
     owner = models.ForeignKey(
         User,
@@ -80,10 +90,10 @@ class Tree(models.Model):
     )
     is_present = models.BooleanField(default=True)
     latitude = models.FloatField(
-        validators=[MinValueValidator(-90), MaxValueValidator(90)],
+        validators=[MinValueValidator(MIN_LATITUDE), MaxValueValidator(MAX_LATITUDE)],
     )
     longitude = models.FloatField(
-        validators=[MinValueValidator(-180), MaxValueValidator(180)],
+        validators=[MinValueValidator(MIN_LONGITUDE), MaxValueValidator(MAX_LONGITUDE)],
     )
     condition = models.CharField(
         max_length=16,
@@ -100,21 +110,21 @@ class Tree(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(0), MaxValueValidator(150)],
+        validators=[MinValueValidator(0), MaxValueValidator(MAX_HEIGHT_M)],
     )
     trunk_girth_cm = models.DecimalField(
         max_digits=5,
         decimal_places=1,
         null=True,
         blank=True,
-        validators=[MinValueValidator(0), MaxValueValidator(3000)],
+        validators=[MinValueValidator(0), MaxValueValidator(MAX_TRUNK_GIRTH_CM)],
     )
     crown_spread_m = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(0), MaxValueValidator(200)],
+        validators=[MinValueValidator(0), MaxValueValidator(MAX_CROWN_SPREAD_M)],
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

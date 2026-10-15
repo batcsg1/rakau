@@ -1,25 +1,21 @@
-from django.shortcuts import render
-from django.db.models import Count, F, Q
+from django.db.models import Count
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from .models import Tree, Species
+
+from .models import Species, Tree
 from .pagination import MyTreesPagination
-from .serializers import SpeciesSerializer, TreeSerializer
-from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
-
-from .models import Tree, Species
-
-# Create your views here.
+from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
+from .serializers import SpeciesDetailSerializer, SpeciesSerializer, TreeSerializer
 
 
 class TreeViewSet(viewsets.ModelViewSet):
-
     queryset = Tree.objects.all()
+    serializer_class = TreeSerializer
     permission_classes = [IsOwnerOrReadOnly]
 
     def get_queryset(self):
-        queryset = Tree.objects.all()
+        queryset = Tree.objects.select_related("owner", "species")
         params = self.request.query_params
 
         if species := params.get("species_slug"):
@@ -31,11 +27,6 @@ class TreeViewSet(viewsets.ModelViewSet):
         if (present := params.get("is_present")) is not None:
             queryset = queryset.filter(is_present=present.lower() == "true")
         return queryset
-
-    def get_serializer_class(self):
-        if self.action == "retrieve":
-            return TreeSerializer
-        return TreeSerializer
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -51,31 +42,16 @@ class TreeViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-    def perform_update(self, serializer):
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        instance.delete()
 
 class SpeciesViewSet(viewsets.ModelViewSet):
-
     queryset = Species.objects.all()
     permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
-        queryset = Species.objects.annotate(tree_count=Count("trees"))
-        return queryset
+        return Species.objects.annotate(tree_count=Count("trees"))
 
+    # The list stays lean for pickers; a single species also reports how many trees use it
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return SpeciesSerializer
+            return SpeciesDetailSerializer
         return SpeciesSerializer
-
-    def perform_create(self, serializer):
-        serializer.save()
-
-    def perform_update(self, serializer):
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        instance.delete()
