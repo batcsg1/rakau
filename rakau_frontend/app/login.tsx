@@ -15,7 +15,9 @@ import { router, useLocalSearchParams } from "expo-router";
 import { login } from "../api/auth";
 import { ApiError, type FieldErrors } from "../api/errors";
 import { safeNext } from "../api/navigation";
+import { BackButton } from "../components/BackButton";
 import { FormField } from "../components/FormField";
+import colors from "../constants/colors";
 
 export default function LoginScreen() {
   // Set when a protected screen sent the user here, e.g. /login?next=/trees/new
@@ -53,15 +55,10 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView contentContainerClassName="px-6 pb-12" keyboardShouldPersistTaps="handled">
-          <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
-            className="self-start pt-4 active:opacity-60"
-          >
-            <Text className="text-base text-leaf font-iosevka-semibold">← Back</Text>
-          </Pressable>
+          <BackButton fallback="/" />
 
-          <Text className="mt-6 text-3xl font-iosevka-bold text-bark">Welcome back</Text>
-          <Text className="mt-1 text-sm text-bark/70 font-iosevka">
+          <Text className="mt-6 font-iosevka-bold text-3xl text-bark">Welcome back</Text>
+          <Text className="mt-1 font-iosevka text-sm text-bark/70">
             Log in to record and manage your trees.
           </Text>
 
@@ -90,9 +87,7 @@ export default function LoginScreen() {
             />
           </View>
 
-          {error && (
-            <Text className="mt-4 text-sm text-red-700 font-iosevka">{error}</Text>
-          )}
+          {error && <Text className="mt-4 font-iosevka text-sm text-red-700">{error}</Text>}
 
           <Pressable
             onPress={onSubmit}
@@ -100,9 +95,9 @@ export default function LoginScreen() {
             className="mt-8 items-center rounded-full bg-leaf px-6 py-4 active:opacity-80 disabled:opacity-50"
           >
             {submitting ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.white} />
             ) : (
-              <Text className="text-base font-iosevka-semibold text-white">Log in</Text>
+              <Text className="font-iosevka-semibold text-base text-white">Log in</Text>
             )}
           </Pressable>
 
@@ -110,9 +105,9 @@ export default function LoginScreen() {
             onPress={() => router.replace({ pathname: "/register", params: next ? { next } : {} })}
             className="mt-6 items-center active:opacity-60"
           >
-            <Text className="text-sm text-bark/70 font-iosevka">
+            <Text className="font-iosevka text-sm text-bark/70">
               New to Rākau?{" "}
-              <Text className="text-leaf font-iosevka-semibold">Create an account</Text>
+              <Text className="font-iosevka-semibold text-leaf">Create an account</Text>
             </Text>
           </Pressable>
         </ScrollView>

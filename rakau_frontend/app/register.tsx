@@ -15,7 +15,9 @@ import { router, useLocalSearchParams } from "expo-router";
 import { register } from "../api/auth";
 import { ApiError, type FieldErrors } from "../api/errors";
 import { safeNext } from "../api/navigation";
+import { BackButton } from "../components/BackButton";
 import { FormField } from "../components/FormField";
+import colors from "../constants/colors";
 
 export default function RegisterScreen() {
   // Set when a protected screen sent the user here, e.g. /login?next=/trees/new
@@ -69,15 +71,10 @@ export default function RegisterScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView contentContainerClassName="px-6 pb-12" keyboardShouldPersistTaps="handled">
-          <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
-            className="self-start pt-4 active:opacity-60"
-          >
-            <Text className="text-base text-leaf font-iosevka-semibold">← Back</Text>
-          </Pressable>
+          <BackButton fallback="/" />
 
-          <Text className="mt-6 text-3xl font-iosevka-bold text-bark">Create an account</Text>
-          <Text className="mt-1 text-sm text-bark/70 font-iosevka">
+          <Text className="mt-6 font-iosevka-bold text-3xl text-bark">Create an account</Text>
+          <Text className="mt-1 font-iosevka text-sm text-bark/70">
             Start recording the trees around you.
           </Text>
 
@@ -150,13 +147,11 @@ export default function RegisterScreen() {
           </View>
 
           {fieldErrors.non_field_errors?.map((message) => (
-            <Text key={message} className="mt-4 text-sm text-red-700 font-iosevka">
+            <Text key={message} className="mt-4 font-iosevka text-sm text-red-700">
               {message}
             </Text>
           ))}
-          {error && (
-            <Text className="mt-4 text-sm text-red-700 font-iosevka">{error}</Text>
-          )}
+          {error && <Text className="mt-4 font-iosevka text-sm text-red-700">{error}</Text>}
 
           <Pressable
             onPress={onSubmit}
@@ -172,11 +167,9 @@ export default function RegisterScreen() {
             className="mt-8 items-center rounded-full bg-leaf px-6 py-4 active:opacity-80 disabled:opacity-50"
           >
             {submitting ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.white} />
             ) : (
-              <Text className="text-base font-iosevka-semibold text-white">
-                Create account
-              </Text>
+              <Text className="font-iosevka-semibold text-base text-white">Create account</Text>
             )}
           </Pressable>
 
@@ -184,9 +177,9 @@ export default function RegisterScreen() {
             onPress={() => router.replace({ pathname: "/login", params: next ? { next } : {} })}
             className="mt-6 items-center active:opacity-60"
           >
-            <Text className="text-sm text-bark/70 font-iosevka">
+            <Text className="font-iosevka text-sm text-bark/70">
               Already have an account?{" "}
-              <Text className="text-leaf font-iosevka-semibold">Log in</Text>
+              <Text className="font-iosevka-semibold text-leaf">Log in</Text>
             </Text>
           </Pressable>
         </ScrollView>

@@ -12,35 +12,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 
-import { isLoggedIn } from "../../api/auth";
 import { ApiError, type FieldErrors } from "../../api/errors";
 import { getSpecies } from "../../api/speciesApi";
 import { createTree } from "../../api/treesApi";
-import {
-  CONDITION_LABELS,
-  REGION_LABELS,
-  type Condition,
-  type Region,
-  type Species,
-  type TreeInput,
-} from "../../api/types";
+import type { Condition, Region, Species, TreeInput } from "../../api/types";
+import { BackButton } from "../../components/BackButton";
 import { ChipGroup } from "../../components/ChipGroup";
 import { FormField } from "../../components/FormField";
-
-const CONDITION_OPTIONS = Object.entries(CONDITION_LABELS).map(([value, label]) => ({
-  value: value as Condition,
-  label,
-}));
-
-const REGION_OPTIONS = Object.entries(REGION_LABELS).map(([value, label]) => ({
-  value: value as Region,
-  label,
-}));
-
-const STATUS_OPTIONS = [
-  { value: true, label: "Present" },
-  { value: false, label: "Removed" },
-];
+import colors from "../../constants/colors";
+import {
+  CONDITION_OPTIONS,
+  LATITUDE_RANGE,
+  LONGITUDE_RANGE,
+  REGION_OPTIONS,
+  STATUS_OPTIONS,
+} from "../../constants/options";
+import { useRequireAuth } from "../../hooks/useRequireAuth";
 
 // "" -> null (optional field left blank); "12,5" -> 12.5; anything unparsable -> NaN
 function parseNumber(text: string): number | null {
@@ -48,8 +35,13 @@ function parseNumber(text: string): number | null {
   return trimmed === "" ? null : Number(trimmed);
 }
 
+function isInRange(value: number | null, range: { min: number; max: number }): value is number {
+  return value !== null && !Number.isNaN(value) && value >= range.min && value <= range.max;
+}
+
 export default function NewTreeScreen() {
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  // Only signed-in users can record trees; come back here after logging in
+  const checkingAuth = useRequireAuth("/trees/new");
 
   const [species, setSpecies] = useState<Species[]>([]);
   const [speciesError, setSpeciesError] = useState<string | null>(null);
@@ -68,17 +60,6 @@ export default function NewTreeScreen() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Only signed-in users can record trees; come back here after logging in
-  useEffect(() => {
-    isLoggedIn().then((loggedIn) => {
-      if (loggedIn) {
-        setCheckingAuth(false);
-      } else {
-        router.replace({ pathname: "/login", params: { next: "/trees/new" } });
-      }
-    });
-  }, []);
 
   useEffect(() => {
     getSpecies()
@@ -111,11 +92,15 @@ export default function NewTreeScreen() {
 
     if (!speciesSlug) errors.species_slug = ["Choose a species."];
     if (!condition) errors.condition = ["Choose the tree's condition."];
-    if (lat === null || Number.isNaN(lat) || lat < -90 || lat > 90) {
-      errors.latitude = ["Enter a latitude between -90 and 90."];
+    if (!isInRange(lat, LATITUDE_RANGE)) {
+      errors.latitude = [
+        `Enter a latitude between ${LATITUDE_RANGE.min} and ${LATITUDE_RANGE.max}.`,
+      ];
     }
-    if (lng === null || Number.isNaN(lng) || lng < -180 || lng > 180) {
-      errors.longitude = ["Enter a longitude between -180 and 180."];
+    if (!isInRange(lng, LONGITUDE_RANGE)) {
+      errors.longitude = [
+        `Enter a longitude between ${LONGITUDE_RANGE.min} and ${LONGITUDE_RANGE.max}.`,
+      ];
     }
     if (Number.isNaN(heightM)) errors.height_m = ["Enter a number, e.g. 12.5"];
     if (Number.isNaN(girthCm)) errors.trunk_girth_cm = ["Enter a number, e.g. 240"];
@@ -128,8 +113,8 @@ export default function NewTreeScreen() {
       input: {
         species_slug: speciesSlug!,
         condition: condition!,
-        latitude: lat!,
-        longitude: lng!,
+        latitude: lat as number,
+        longitude: lng as number,
         region: region ?? "",
         is_present: isPresent,
         height_m: heightM,
@@ -156,7 +141,10 @@ export default function NewTreeScreen() {
       if (e instanceof ApiError) {
         const { non_field_errors, ...rest } = e.fieldErrors;
         setFieldErrors(rest);
-        setError(non_field_errors?.join(" ") ?? (Object.keys(rest).length ? "Check the highlighted fields." : e.message));
+        setError(
+          non_field_errors?.join(" ") ??
+            (Object.keys(rest).length ? "Check the highlighted fields." : e.message),
+        );
       } else {
         setError("Couldn't reach the server. Check your connection and try again.");
       }
@@ -168,7 +156,7 @@ export default function NewTreeScreen() {
   if (checkingAuth) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-sand">
-        <ActivityIndicator color="#2E7D32" />
+        <ActivityIndicator color={colors.leaf} />
       </SafeAreaView>
     );
   }
@@ -181,15 +169,10 @@ export default function NewTreeScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView contentContainerClassName="px-6 pb-12" keyboardShouldPersistTaps="handled">
-          <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace("/trees"))}
-            className="self-start pt-4 active:opacity-60"
-          >
-            <Text className="text-base text-leaf font-iosevka-semibold">← Back</Text>
-          </Pressable>
+          <BackButton fallback="/trees" />
 
-          <Text className="mt-6 text-3xl font-iosevka-bold text-bark">Record a tree</Text>
-          <Text className="mt-1 text-sm text-bark/70 font-iosevka">
+          <Text className="mt-6 font-iosevka-bold text-3xl text-bark">Record a tree</Text>
+          <Text className="mt-1 font-iosevka text-sm text-bark/70">
             Fields marked * are required.
           </Text>
 
@@ -204,11 +187,11 @@ export default function NewTreeScreen() {
               />
               <View className="mt-3">
                 {speciesError ? (
-                  <Text className="text-sm text-red-700 font-iosevka">{speciesError}</Text>
+                  <Text className="font-iosevka text-sm text-red-700">{speciesError}</Text>
                 ) : species.length === 0 ? (
-                  <ActivityIndicator color="#2E7D32" />
+                  <ActivityIndicator color={colors.leaf} />
                 ) : speciesOptions.length === 0 ? (
-                  <Text className="text-sm text-bark/70 font-iosevka">
+                  <Text className="font-iosevka text-sm text-bark/70">
                     No species match "{speciesSearch}".
                   </Text>
                 ) : (
@@ -232,7 +215,7 @@ export default function NewTreeScreen() {
             />
 
             <View>
-              <Text className="mb-2 text-base font-iosevka-semibold text-bark">Location</Text>
+              <Text className="mb-2 font-iosevka-semibold text-base text-bark">Location</Text>
               <View className="flex-row gap-3">
                 <View className="flex-1">
                   <FormField
@@ -274,7 +257,7 @@ export default function NewTreeScreen() {
             />
 
             <View>
-              <Text className="mb-2 text-base font-iosevka-semibold text-bark">
+              <Text className="mb-2 font-iosevka-semibold text-base text-bark">
                 Measurements (optional)
               </Text>
               <View className="gap-4">
@@ -306,7 +289,7 @@ export default function NewTreeScreen() {
             </View>
           </View>
 
-          {error && <Text className="mt-6 text-sm text-red-700 font-iosevka">{error}</Text>}
+          {error && <Text className="mt-6 font-iosevka text-sm text-red-700">{error}</Text>}
 
           <Pressable
             onPress={onSubmit}
@@ -314,9 +297,9 @@ export default function NewTreeScreen() {
             className="mt-8 items-center rounded-full bg-leaf px-6 py-4 active:opacity-80 disabled:opacity-50"
           >
             {submitting ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.white} />
             ) : (
-              <Text className="text-base font-iosevka-semibold text-white">Save tree</Text>
+              <Text className="font-iosevka-semibold text-base text-white">Save tree</Text>
             )}
           </Pressable>
         </ScrollView>

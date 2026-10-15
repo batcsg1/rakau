@@ -1,28 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
 
-import { isLoggedIn } from "../../api/auth";
 import { deleteTree, getMyTrees } from "../../api/treesApi";
 import { CONDITION_LABELS, REGION_LABELS, type Condition, type Tree } from "../../api/types";
+import { BackButton } from "../../components/BackButton";
+import colors from "../../constants/colors";
+import { CONDITION_OPTIONS, type Option } from "../../constants/options";
+import { useRequireAuth } from "../../hooks/useRequireAuth";
 
+// Mirrors trees.pagination.MyTreesPagination.page_size
 const PAGE_SIZE = 20;
 
-const FILTERS: { value: Condition | undefined; label: string }[] = [
+const FILTERS: Option<Condition | undefined>[] = [
   { value: undefined, label: "All" },
-  ...Object.entries(CONDITION_LABELS).map(([value, label]) => ({
-    value: value as Condition,
-    label,
-  })),
+  ...CONDITION_OPTIONS,
 ];
 
 // "14 Mar" this year, "14 Mar 2025" otherwise
@@ -60,19 +54,17 @@ function TreeRow({
     >
       {/* Placeholder thumbnail until trees have photos */}
       <View className="h-14 w-14 items-center justify-center rounded-lg border border-bark/10 bg-leaf/10">
-        <Text className="text-xl font-iosevka-bold text-leaf">
-          {tree.species_name.charAt(0)}
-        </Text>
+        <Text className="font-iosevka-bold text-xl text-leaf">{tree.species_name.charAt(0)}</Text>
       </View>
       <View className="flex-1">
-        <Text className="text-base font-iosevka-semibold text-bark" numberOfLines={1}>
+        <Text className="font-iosevka-semibold text-base text-bark" numberOfLines={1}>
           {tree.species_name}
         </Text>
-        <Text className="mt-0.5 text-sm text-bark/60 font-iosevka" numberOfLines={1}>
+        <Text className="mt-0.5 font-iosevka text-sm text-bark/60" numberOfLines={1}>
           {subtitle(tree)}
         </Text>
       </View>
-      <Text className="text-xs text-bark/50 font-iosevka">
+      <Text className="font-iosevka text-xs text-bark/50">
         {highlighted ? "just now" : shortDate(tree.created_at)}
       </Text>
     </Pressable>
@@ -95,7 +87,7 @@ export default function MyTreesScreen() {
   // Set by the Add Tree screen after a successful save
   const { added } = useLocalSearchParams<{ added?: string }>();
 
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const checkingAuth = useRequireAuth("/trees/mine");
   const [condition, setCondition] = useState<Condition>();
   const [trees, setTrees] = useState<Tree[]>([]);
   const [count, setCount] = useState(0);
@@ -111,16 +103,6 @@ export default function MyTreesScreen() {
 
   // Bumped on every fresh load so a slow response for an old filter is ignored
   const requestId = useRef(0);
-
-  useEffect(() => {
-    isLoggedIn().then((loggedIn) => {
-      if (loggedIn) {
-        setCheckingAuth(false);
-      } else {
-        router.replace({ pathname: "/login", params: { next: "/trees/mine" } });
-      }
-    });
-  }, []);
 
   // Loads page 1 and replaces the list (first load, filter change, refresh, retry)
   const loadFirstPage = useCallback(async () => {
@@ -196,7 +178,7 @@ export default function MyTreesScreen() {
   if (checkingAuth) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-sand">
-        <ActivityIndicator color="#2E7D32" />
+        <ActivityIndicator color={colors.leaf} />
       </SafeAreaView>
     );
   }
@@ -207,23 +189,18 @@ export default function MyTreesScreen() {
     <View>
       <View className="border-b border-bark/20 px-6 pb-4 pt-4">
         <View className="flex-row items-center justify-between">
-          <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
-            className="active:opacity-60"
-          >
-            <Text className="text-base text-leaf font-iosevka-semibold">← Back</Text>
-          </Pressable>
+          <BackButton fallback="/" className="" />
           <Pressable
             onPress={() => router.push("/trees/new")}
             className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
           >
-            <Text className="text-sm font-iosevka-semibold text-white">+ Add tree</Text>
+            <Text className="font-iosevka-semibold text-sm text-white">+ Add tree</Text>
           </Pressable>
         </View>
 
         <View className="mt-4 flex-row items-end justify-between">
-          <Text className="text-3xl font-iosevka-bold text-bark">My Trees</Text>
-          <Text className="text-right text-xs text-bark/60 font-iosevka">
+          <Text className="font-iosevka-bold text-3xl text-bark">My Trees</Text>
+          <Text className="text-right font-iosevka text-xs text-bark/60">
             {loading ? "loading…" : error && trees.length ? "saved copy" : `${count} recorded`}
           </Text>
         </View>
@@ -243,9 +220,7 @@ export default function MyTreesScreen() {
                   active ? "border-canopy bg-canopy" : "border-bark/30 bg-white"
                 }`}
               >
-                <Text
-                  className={`text-sm font-iosevka ${active ? "text-white" : "text-bark"}`}
-                >
+                <Text className={`font-iosevka text-sm ${active ? "text-white" : "text-bark"}`}>
                   {filter.label}
                 </Text>
               </Pressable>
@@ -256,14 +231,14 @@ export default function MyTreesScreen() {
 
       {addedTree && (
         <View className="flex-row items-center justify-between border-b border-leaf/30 bg-leaf/15 px-6 py-3">
-          <Text className="flex-1 text-sm text-canopy font-iosevka-semibold">
+          <Text className="flex-1 font-iosevka-semibold text-sm text-canopy">
             ✓ {addedTree.species_name} added
           </Text>
           <Pressable onPress={undoAdd} disabled={undoing} className="active:opacity-60">
             {undoing ? (
-              <ActivityIndicator color="#1B5E20" />
+              <ActivityIndicator color={colors.canopy} />
             ) : (
-              <Text className="text-sm text-canopy underline font-iosevka-semibold">Undo</Text>
+              <Text className="font-iosevka-semibold text-sm text-canopy underline">Undo</Text>
             )}
           </Pressable>
         </View>
@@ -271,10 +246,10 @@ export default function MyTreesScreen() {
 
       {error && (
         <View className="border-b border-red-700/30 bg-red-100 px-6 py-4">
-          <Text className="text-base text-red-700 font-iosevka-semibold">
+          <Text className="font-iosevka-semibold text-base text-red-700">
             Couldn't reach the register
           </Text>
-          <Text className="mt-1 text-sm text-bark/70 font-iosevka">
+          <Text className="mt-1 font-iosevka text-sm text-bark/70">
             {trees.length ? "Showing the trees you'd already loaded. " : ""}
             {error}
           </Text>
@@ -282,7 +257,7 @@ export default function MyTreesScreen() {
             onPress={onRefresh}
             className="mt-3 self-start rounded-md bg-red-700 px-4 py-2 active:opacity-80"
           >
-            <Text className="text-sm text-white font-iosevka-semibold">Retry</Text>
+            <Text className="font-iosevka-semibold text-sm text-white">Retry</Text>
           </Pressable>
         </View>
       )}
@@ -300,12 +275,12 @@ export default function MyTreesScreen() {
       <View className="h-24 w-24 items-center justify-center border border-dashed border-bark/30">
         <View className="h-3 w-3 rounded-full bg-leaf/50" />
       </View>
-      <Text className="mt-6 text-xl text-bark font-iosevka-semibold">
+      <Text className="mt-6 font-iosevka-semibold text-xl text-bark">
         {condition
           ? `No ${CONDITION_LABELS[condition].toLowerCase()} trees`
           : "No trees logged yet"}
       </Text>
-      <Text className="mt-2 text-center text-sm leading-5 text-bark/60 font-iosevka">
+      <Text className="mt-2 text-center font-iosevka text-sm leading-5 text-bark/60">
         {condition
           ? "Try another filter, or record a new tree."
           : "Trees you record appear here, newest first."}
@@ -314,7 +289,7 @@ export default function MyTreesScreen() {
         onPress={() => router.push("/trees/new")}
         className="mt-6 w-full items-center rounded-md bg-canopy px-6 py-4 active:opacity-80"
       >
-        <Text className="text-base text-white font-iosevka-semibold">
+        <Text className="font-iosevka-semibold text-base text-white">
           {condition ? "Record a tree" : "Add your first tree"}
         </Text>
       </Pressable>
@@ -325,9 +300,9 @@ export default function MyTreesScreen() {
     trees.length === 0 ? null : (
       <View className="items-center py-6">
         {loadingMore ? (
-          <ActivityIndicator color="#2E7D32" />
+          <ActivityIndicator color={colors.leaf} />
         ) : (
-          <Text className="text-xs text-bark/50 font-iosevka">
+          <Text className="font-iosevka text-xs text-bark/50">
             {hasNext
               ? `page ${page} of ${totalPages} · scroll for more`
               : `all ${count} ${count === 1 ? "tree" : "trees"} shown`}

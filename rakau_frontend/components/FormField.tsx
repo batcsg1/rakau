@@ -1,5 +1,7 @@
 import { Text, TextInput, View, type TextInputProps } from "react-native";
 
+import colors from "../constants/colors";
+
 type FormFieldProps = TextInputProps & {
   label: string;
   errors?: string[];
@@ -11,16 +13,16 @@ export function FormField({ label, errors, ...inputProps }: FormFieldProps) {
 
   return (
     <View>
-      <Text className="mb-1 text-sm font-iosevka-semibold text-bark">{label}</Text>
+      <Text className="mb-1 font-iosevka-semibold text-sm text-bark">{label}</Text>
       <TextInput
-        placeholderTextColor="#3E272380"
-        className={`rounded-xl border bg-white px-4 py-3 text-base text-bark font-iosevka ${
+        placeholderTextColor={`${colors.bark}80`}
+        className={`rounded-xl border bg-white px-4 py-3 font-iosevka text-base text-bark ${
           hasError ? "border-red-700" : "border-leaf/30"
         }`}
         {...inputProps}
       />
       {errors?.map((message) => (
-        <Text key={message} className="mt-1 text-sm text-red-700 font-iosevka">
+        <Text key={message} className="mt-1 font-iosevka text-sm text-red-700">
           {message}
         </Text>
       ))}

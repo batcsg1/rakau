@@ -1,45 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 
 import { getSpecies } from "../../api/speciesApi";
 import { getTrees } from "../../api/treesApi";
-import {
-  CONDITION_LABELS,
-  REGION_LABELS,
-  type Condition,
-  type Region,
-  type Species,
-  type Tree,
-  type TreeFilters,
-} from "../../api/types";
+import { REGION_LABELS, type Species, type Tree, type TreeFilters } from "../../api/types";
+import { BackButton } from "../../components/BackButton";
 import { ConditionBadge } from "../../components/ConditionBadge";
-
-type Option<T> = { value: T; label: string };
-
-const REGION_OPTIONS = Object.entries(REGION_LABELS).map(([value, label]) => ({
-  value: value as Region,
-  label,
-}));
-
-const CONDITION_OPTIONS = Object.entries(CONDITION_LABELS).map(([value, label]) => ({
-  value: value as Condition,
-  label,
-}));
-
-const STATUS_OPTIONS: Option<boolean>[] = [
-  { value: true, label: "Present" },
-  { value: false, label: "Removed" },
-];
+import colors from "../../constants/colors";
+import {
+  CONDITION_OPTIONS,
+  REGION_OPTIONS,
+  STATUS_OPTIONS,
+  type Option,
+} from "../../constants/options";
 
 // One labelled row of horizontally scrolling chips, with "All" to clear that filter
 function FilterRow<T>({
@@ -53,14 +29,11 @@ function FilterRow<T>({
   selected: T | undefined;
   onSelect: (value: T | undefined) => void;
 }) {
-  const chips: { value: T | undefined; label: string }[] = [
-    { value: undefined, label: "All" },
-    ...options,
-  ];
+  const chips: Option<T | undefined>[] = [{ value: undefined, label: "All" }, ...options];
 
   return (
     <View className="mt-4">
-      <Text className="px-6 text-sm font-iosevka-semibold text-bark/70">{label}</Text>
+      <Text className="px-6 font-iosevka-semibold text-sm text-bark/70">{label}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -76,9 +49,7 @@ function FilterRow<T>({
                 active ? "border-leaf bg-leaf" : "border-leaf/40 bg-white"
               }`}
             >
-              <Text
-                className={`text-sm font-iosevka ${active ? "text-white" : "text-bark"}`}
-              >
+              <Text className={`font-iosevka text-sm ${active ? "text-white" : "text-bark"}`}>
                 {chip.label}
               </Text>
             </Pressable>
@@ -97,10 +68,8 @@ function TreeCard({ tree }: { tree: Tree }) {
     >
       <View className="flex-row items-start justify-between gap-3">
         <View className="flex-1">
-          <Text className="text-base font-iosevka-semibold text-bark">
-            {tree.species_name}
-          </Text>
-          <Text className="text-sm italic text-bark/60 font-iosevka">
+          <Text className="font-iosevka-semibold text-base text-bark">{tree.species_name}</Text>
+          <Text className="font-iosevka text-sm italic text-bark/60">
             {tree.species_scientific_name}
           </Text>
         </View>
@@ -108,20 +77,18 @@ function TreeCard({ tree }: { tree: Tree }) {
       </View>
 
       <View className="mt-3 flex-row flex-wrap gap-x-4 gap-y-1">
-        <Text className="text-sm text-bark/70 font-iosevka">
+        <Text className="font-iosevka text-sm text-bark/70">
           {tree.region ? REGION_LABELS[tree.region] : "No region"}
         </Text>
-        <Text className="text-sm text-bark/70 font-iosevka">
+        <Text className="font-iosevka text-sm text-bark/70">
           {tree.is_present ? "Present" : "Removed"}
         </Text>
         {tree.height_m && (
-          <Text className="text-sm text-bark/70 font-iosevka">
-            {Number(tree.height_m)} m tall
-          </Text>
+          <Text className="font-iosevka text-sm text-bark/70">{Number(tree.height_m)} m tall</Text>
         )}
       </View>
 
-      <Text className="mt-2 text-xs text-bark/50 font-iosevka">
+      <Text className="mt-2 font-iosevka text-xs text-bark/50">
         Recorded {new Date(tree.created_at).toLocaleDateString("en-NZ")}
         {tree.owner ? ` by ${tree.owner}` : ""}
       </Text>
@@ -192,30 +159,25 @@ export default function TreesScreen() {
   const header = (
     <View className="pb-4">
       <View className="px-6 pt-4">
-        <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
-          className="self-start active:opacity-60"
-        >
-          <Text className="text-base text-leaf font-iosevka-semibold">← Back</Text>
-        </Pressable>
+        <BackButton fallback="/" className="self-start" />
         <View className="mt-3 flex-row items-center justify-between gap-3">
-          <Text className="text-3xl font-iosevka-bold text-bark">Tree catalogue</Text>
+          <Text className="font-iosevka-bold text-3xl text-bark">Tree catalogue</Text>
           <View className="flex-row gap-2">
             <Pressable
               onPress={() => router.push("/trees/mine")}
               className="rounded-full border border-leaf px-4 py-2 active:opacity-70"
             >
-              <Text className="text-sm font-iosevka-semibold text-leaf">My trees</Text>
+              <Text className="font-iosevka-semibold text-sm text-leaf">My trees</Text>
             </Pressable>
             <Pressable
               onPress={() => router.push("/trees/new")}
               className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
             >
-              <Text className="text-sm font-iosevka-semibold text-white">+ Add</Text>
+              <Text className="font-iosevka-semibold text-sm text-white">+ Add</Text>
             </Pressable>
           </View>
         </View>
-        <Text className="mt-1 text-sm text-bark/70 font-iosevka">
+        <Text className="mt-1 font-iosevka text-sm text-bark/70">
           Every tree recorded across Aotearoa.
         </Text>
       </View>
@@ -248,12 +210,12 @@ export default function TreesScreen() {
       />
 
       <View className="mt-4 flex-row items-center justify-between px-6">
-        <Text className="text-sm text-bark/70 font-iosevka">
+        <Text className="font-iosevka text-sm text-bark/70">
           {loading ? "Loading…" : `${trees.length} ${trees.length === 1 ? "tree" : "trees"}`}
         </Text>
         {hasFilters && (
           <Pressable onPress={() => setFilters({})} className="active:opacity-60">
-            <Text className="text-sm text-leaf font-iosevka-semibold">Clear filters</Text>
+            <Text className="font-iosevka-semibold text-sm text-leaf">Clear filters</Text>
           </Pressable>
         )}
       </View>
@@ -261,28 +223,28 @@ export default function TreesScreen() {
   );
 
   const emptyState = loading ? (
-    <ActivityIndicator className="mt-10" color="#2E7D32" />
+    <ActivityIndicator className="mt-10" color={colors.leaf} />
   ) : error ? (
     <View className="mx-6 mt-6 items-center rounded-2xl bg-white p-6">
-      <Text className="text-center text-base text-bark font-iosevka-semibold">
+      <Text className="text-center font-iosevka-semibold text-base text-bark">
         Couldn't load trees
       </Text>
-      <Text className="mt-1 text-center text-sm text-bark/70 font-iosevka">{error}</Text>
+      <Text className="mt-1 text-center font-iosevka text-sm text-bark/70">{error}</Text>
       <Pressable
         onPress={onRefresh}
         className="mt-4 rounded-full bg-leaf px-6 py-3 active:opacity-80"
       >
-        <Text className="text-sm text-white font-iosevka-semibold">Try again</Text>
+        <Text className="font-iosevka-semibold text-sm text-white">Try again</Text>
       </Pressable>
     </View>
   ) : (
     <View className="mx-6 mt-6 items-center rounded-2xl bg-white p-6">
-      <Text className="text-center text-base text-bark font-iosevka-semibold">
+      <Text className="text-center font-iosevka-semibold text-base text-bark">
         {hasFilters ? "No trees match these filters" : "No trees recorded yet"}
       </Text>
       {hasFilters && (
         <Pressable onPress={() => setFilters({})} className="mt-3 active:opacity-60">
-          <Text className="text-sm text-leaf font-iosevka-semibold">Clear filters</Text>
+          <Text className="font-iosevka-semibold text-sm text-leaf">Clear filters</Text>
         </Pressable>
       )}
     </View>

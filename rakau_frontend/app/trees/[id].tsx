@@ -10,12 +10,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 
 import { ApiError } from "../../api/client";
 import { getTree } from "../../api/treesApi";
 import { REGION_LABELS, type Tree } from "../../api/types";
+import { BackButton } from "../../components/BackButton";
 import { ConditionBadge } from "../../components/ConditionBadge";
+import colors from "../../constants/colors";
 
 // "30.00" -> "30 m"; missing measurements show as a dash
 function measurement(value: string | null, unit: string): string {
@@ -33,10 +35,8 @@ function formatDate(iso: string): string {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row justify-between gap-4 border-t border-leaf/10 py-3">
-      <Text className="text-sm text-bark/70 font-iosevka">{label}</Text>
-      <Text className="flex-1 text-right text-sm text-bark font-iosevka-semibold">
-        {value}
-      </Text>
+      <Text className="font-iosevka text-sm text-bark/70">{label}</Text>
+      <Text className="flex-1 text-right font-iosevka-semibold text-sm text-bark">{value}</Text>
     </View>
   );
 }
@@ -44,7 +44,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View className="mx-6 mt-4 rounded-2xl border border-leaf/20 bg-white px-4 py-2 shadow-sm">
-      <Text className="pb-1 pt-2 text-base font-iosevka-semibold text-bark">{title}</Text>
+      <Text className="pb-1 pt-2 font-iosevka-semibold text-base text-bark">{title}</Text>
       {children}
     </View>
   );
@@ -88,25 +88,16 @@ export default function TreeDetailScreen() {
   };
 
   const openInMaps = (latitude: number, longitude: number) =>
-    Linking.openURL(
-      `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`,
-    );
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
 
-  const backButton = (
-    <Pressable
-      onPress={() => (router.canGoBack() ? router.back() : router.replace("/trees"))}
-      className="self-start px-6 pt-4 active:opacity-60"
-    >
-      <Text className="text-base text-leaf font-iosevka-semibold">← Back</Text>
-    </Pressable>
-  );
+  const backButton = <BackButton fallback="/trees" className="self-start px-6 pt-4" />;
 
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-sand">
         <StatusBar style="dark" />
         {backButton}
-        <ActivityIndicator className="mt-10" color="#2E7D32" />
+        <ActivityIndicator className="mt-10" color={colors.leaf} />
       </SafeAreaView>
     );
   }
@@ -117,17 +108,15 @@ export default function TreeDetailScreen() {
         <StatusBar style="dark" />
         {backButton}
         <View className="mx-6 mt-6 items-center rounded-2xl bg-white p-6">
-          <Text className="text-center text-base text-bark font-iosevka-semibold">
+          <Text className="text-center font-iosevka-semibold text-base text-bark">
             Couldn't load this tree
           </Text>
-          <Text className="mt-1 text-center text-sm text-bark/70 font-iosevka">
-            {error}
-          </Text>
+          <Text className="mt-1 text-center font-iosevka text-sm text-bark/70">{error}</Text>
           <Pressable
             onPress={onRefresh}
             className="mt-4 rounded-full bg-leaf px-6 py-3 active:opacity-80"
           >
-            <Text className="text-sm text-white font-iosevka-semibold">Try again</Text>
+            <Text className="font-iosevka-semibold text-sm text-white">Try again</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -146,16 +135,14 @@ export default function TreeDetailScreen() {
         <View className="px-6 pt-3">
           <View className="flex-row items-start justify-between gap-3">
             <View className="flex-1">
-              <Text className="text-3xl font-iosevka-bold text-bark">
-                {tree.species_name}
-              </Text>
-              <Text className="mt-1 text-base italic text-bark/60 font-iosevka">
+              <Text className="font-iosevka-bold text-3xl text-bark">{tree.species_name}</Text>
+              <Text className="mt-1 font-iosevka text-base italic text-bark/60">
                 {tree.species_scientific_name}
               </Text>
             </View>
             <ConditionBadge condition={tree.condition} />
           </View>
-          <Text className="mt-3 text-sm text-bark/70 font-iosevka">
+          <Text className="mt-3 font-iosevka text-sm text-bark/70">
             {tree.is_present ? "Still standing" : "No longer present"}
             {tree.region ? ` · ${REGION_LABELS[tree.region]}` : ""}
           </Text>
@@ -168,17 +155,14 @@ export default function TreeDetailScreen() {
         </Section>
 
         <Section title="Location">
-          <DetailRow
-            label="Region"
-            value={tree.region ? REGION_LABELS[tree.region] : "Not set"}
-          />
+          <DetailRow label="Region" value={tree.region ? REGION_LABELS[tree.region] : "Not set"} />
           <DetailRow label="Latitude" value={tree.latitude.toFixed(5)} />
           <DetailRow label="Longitude" value={tree.longitude.toFixed(5)} />
           <Pressable
             onPress={() => openInMaps(tree.latitude, tree.longitude)}
             className="my-3 items-center rounded-full border border-leaf px-6 py-3 active:opacity-70"
           >
-            <Text className="text-sm text-leaf font-iosevka-semibold">Open in Maps</Text>
+            <Text className="font-iosevka-semibold text-sm text-leaf">Open in Maps</Text>
           </Pressable>
         </Section>
 
