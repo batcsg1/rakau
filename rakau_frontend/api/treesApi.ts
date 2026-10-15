@@ -25,10 +25,7 @@ export async function getTrees(filters: TreeFilters = {}): Promise<Tree[]> {
 }
 
 // Get the signed-in user's Trees, newest first, 20 per page
-export async function getMyTrees(
-  page = 1,
-  filters: TreeFilters = {},
-): Promise<Paginated<Tree>> {
+export async function getMyTrees(page = 1, filters: TreeFilters = {}): Promise<Paginated<Tree>> {
   const query = toQuery({ ...filters, page });
   const response = await request(`/trees/mine/${query}`);
 
@@ -65,10 +62,7 @@ export async function createTree(tree: TreeInput): Promise<Tree> {
 }
 
 // Update a tree
-export async function updateTree(
-  id: number,
-  tree: Partial<TreeInput>,
-): Promise<Tree> {
+export async function updateTree(id: number, tree: Partial<TreeInput>): Promise<Tree> {
   const response = await request(`/trees/${id}/`, {
     method: "PATCH",
     body: JSON.stringify(tree),

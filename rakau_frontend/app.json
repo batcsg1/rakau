@@ -20,10 +20,6 @@
       "favicon": "./assets/rakau-badge-green-transparent.png",
       "bundler": "metro"
     },
-    "plugins": [
-      "expo-router",
-      "expo-status-bar",
-      "expo-secure-store"
-    ]
+    "plugins": ["expo-router", "expo-status-bar", "expo-secure-store"]
   }
 }

@@ -14,20 +14,17 @@ const FEATURES: Feature[] = [
   {
     emoji: "🌱",
     title: "Add & Record Trees",
-    description:
-      "Log native and exotic trees you find with species, location and condition.",
+    description: "Log native and exotic trees you find with species, location and condition.",
   },
   {
     emoji: "🗺️",
     title: "Browse the Catalogue",
-    description:
-      "Discover trees recorded by others, from your street to across Aotearoa.",
+    description: "Discover trees recorded by others, from your street to across Aotearoa.",
   },
   {
     emoji: "🔎",
     title: "Filter & Discover",
-    description:
-      "Search by species, genus, height, girth, region or significance status.",
+    description: "Search by species, genus, height, girth, region or significance status.",
   },
 ];
 
@@ -60,20 +57,17 @@ export default function HomeScreen() {
             className="h-28 w-28"
             accessibilityLabel="Rākau"
           />
-          <Text className="mt-4 text-lg text-white/90 font-iosevka">
+          <Text className="mt-4 font-iosevka text-lg text-white/90">
             Record. Discover. Protect Aotearoa's trees.
           </Text>
-          <Text className="mt-4 text-base leading-6 text-white/80 font-iosevka">
-            Rākau helps home gardeners, arborists, council members, conservation
-            groups and tree enthusiasts build a living catalogue of New
-            Zealand's native and exotic trees.
+          <Text className="mt-4 font-iosevka text-base leading-6 text-white/80">
+            Rākau helps home gardeners, arborists, council members, conservation groups and tree
+            enthusiasts build a living catalogue of New Zealand's native and exotic trees.
           </Text>
         </ImageBackground>
 
         <View className="px-6 pt-6">
-          <Text className="text-xl font-iosevka-semibold text-bark">
-            What you can do
-          </Text>
+          <Text className="font-iosevka-semibold text-xl text-bark">What you can do</Text>
 
           <View className="mt-4 gap-4">
             {FEATURES.map((feature) => (
@@ -83,10 +77,8 @@ export default function HomeScreen() {
               >
                 <Text className="text-3xl">{feature.emoji}</Text>
                 <View className="flex-1">
-                  <Text className="text-base font-iosevka-semibold text-bark">
-                    {feature.title}
-                  </Text>
-                  <Text className="mt-1 text-sm leading-5 text-bark/70 font-iosevka">
+                  <Text className="font-iosevka-semibold text-base text-bark">{feature.title}</Text>
+                  <Text className="mt-1 font-iosevka text-sm leading-5 text-bark/70">
                     {feature.description}
                   </Text>
                 </View>
@@ -99,15 +91,13 @@ export default function HomeScreen() {
               onPress={() => router.push("/register")}
               className="items-center rounded-full bg-leaf px-6 py-4 active:opacity-80"
             >
-              <Text className="text-base font-iosevka-semibold text-white">
-                Get Started
-              </Text>
+              <Text className="font-iosevka-semibold text-base text-white">Get Started</Text>
             </Pressable>
             <Pressable
               onPress={() => router.push("/trees")}
               className="items-center rounded-full border border-leaf px-6 py-4 active:opacity-70"
             >
-              <Text className="text-base font-iosevka-semibold text-leaf">
+              <Text className="font-iosevka-semibold text-base text-leaf">
                 Browse the Catalogue
               </Text>
             </Pressable>
@@ -115,9 +105,9 @@ export default function HomeScreen() {
               onPress={() => router.push("/login")}
               className="mt-2 items-center active:opacity-60"
             >
-              <Text className="text-sm text-bark/70 font-iosevka">
+              <Text className="font-iosevka text-sm text-bark/70">
                 Already have an account?{" "}
-                <Text className="text-leaf font-iosevka-semibold">Log in</Text>
+                <Text className="font-iosevka-semibold text-leaf">Log in</Text>
               </Text>
             </Pressable>
           </View>

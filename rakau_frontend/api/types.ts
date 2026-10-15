@@ -59,20 +59,20 @@ export interface Species {
 // A tree from GET /api/trees/ and GET /api/trees/{id}/
 export interface Tree {
   id: number;
-  owner?: string;             // owner's username, read-only; DRF omits it when the tree has no owner
+  owner?: string; // owner's username, read-only; DRF omits it when the tree has no owner
   species_name: string;
   species_scientific_name: string;
   species_slug: string;
   latitude: number;
   longitude: number;
-  region: Region | "";        // blank is allowed on the model
+  region: Region | ""; // blank is allowed on the model
   condition: Condition;
   is_present: boolean;
   // DecimalFields — DRF sends decimals as strings, e.g. "30.00"
   height_m: string | null;
   trunk_girth_cm: string | null;
   crown_spread_m: string | null;
-  created_at: string;         // ISO 8601 string, not Date
+  created_at: string; // ISO 8601 string, not Date
   updated_at: string;
 }
 

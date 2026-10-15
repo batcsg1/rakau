@@ -13,7 +13,7 @@ const CONDITION_BADGE: Record<Condition, string> = {
 export function ConditionBadge({ condition }: { condition: Condition }) {
   return (
     <View className={`rounded-full px-3 py-1 ${CONDITION_BADGE[condition]}`}>
-      <Text className="text-xs font-iosevka-semibold text-white">
+      <Text className="font-iosevka-semibold text-xs text-white">
         {CONDITION_LABELS[condition]}
       </Text>
     </View>

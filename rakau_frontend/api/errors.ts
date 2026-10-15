@@ -14,10 +14,7 @@ export class ApiError extends Error {
 }
 
 // Turns a failed response into an ApiError, keeping DRF's per-field messages for forms
-export async function toApiError(
-  response: Response,
-  fallback: string,
-): Promise<ApiError> {
+export async function toApiError(response: Response, fallback: string): Promise<ApiError> {
   let body: unknown = null;
   try {
     body = await response.json();
