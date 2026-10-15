@@ -9,48 +9,69 @@ PASSWORD = "Tane-Mahuta-2026"
 class RegisterTests(APITestCase):
     url = reverse("register")
 
+    def payload(self, **overrides):
+        # A valid registration; each test overrides only the field it's checking
+        return {
+            "username": "kauri_fan",
+            "email": "kauri@example.com",
+            "first_name": "Tāne",
+            "last_name": "Mahuta",
+            "password": PASSWORD,
+            **overrides,
+        }
+
     def test_register_creates_user_and_hides_password(self):
-        response = self.client.post(
-            self.url,
-            {"username": "kauri_fan", "email": "kauri@example.com", "password": PASSWORD},
-        )
+        response = self.client.post(self.url, self.payload())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertNotIn("password", response.data)
-        self.assertTrue(User.objects.get(username="kauri_fan").check_password(PASSWORD))
+        user = User.objects.get(username="kauri_fan")
+        self.assertTrue(user.check_password(PASSWORD))
+        self.assertEqual((user.first_name, user.last_name), ("Tāne", "Mahuta"))
+
+    def test_first_and_last_name_are_required(self):
+        data = self.payload()
+        del data["first_name"], data["last_name"]
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("first_name", response.data)
+        self.assertIn("last_name", response.data)
+
+    def test_blank_names_are_rejected(self):
+        response = self.client.post(self.url, self.payload(first_name="  ", last_name=""))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("first_name", response.data)
+        self.assertIn("last_name", response.data)
 
     def test_email_is_required(self):
-        response = self.client.post(self.url, {"username": "kauri_fan", "password": PASSWORD})
+        data = self.payload()
+        del data["email"]
+        response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("email", response.data)
+        self.assertEqual(list(response.data), ["email"])
 
     def test_email_is_stored_lowercase(self):
-        self.client.post(
-            self.url, {"username": "kauri_fan", "email": "Kauri@Example.com", "password": PASSWORD}
-        )
+        self.client.post(self.url, self.payload(email="Kauri@Example.com"))
         self.assertEqual(User.objects.get(username="kauri_fan").email, "kauri@example.com")
 
     def test_duplicate_username_returns_400(self):
         User.objects.create_user("kauri_fan", email="first@example.com", password=PASSWORD)
-        response = self.client.post(
-            self.url,
-            {"username": "kauri_fan", "email": "second@example.com", "password": "Another-Pass-99"},
-        )
+        response = self.client.post(self.url, self.payload(email="second@example.com"))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("username", response.data)
+        self.assertEqual(list(response.data), ["username"])
 
     def test_duplicate_email_is_case_insensitive(self):
         User.objects.create_user("first", email="kauri@example.com", password=PASSWORD)
-        response = self.client.post(
-            self.url,
-            {"username": "second", "email": "KAURI@example.com", "password": "Another-Pass-99"},
-        )
+        response = self.client.post(self.url, self.payload(email="KAURI@example.com"))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("email", response.data)
+        self.assertEqual(list(response.data), ["email"])
 
     def test_weak_password_returns_400_on_password_field(self):
-        response = self.client.post(
-            self.url, {"username": "kauri_fan", "email": "kauri@example.com", "password": "password"}
-        )
+        response = self.client.post(self.url, self.payload(password="password"))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(list(response.data), ["password"])
+
+    def test_password_too_similar_to_name_is_rejected(self):
+        response = self.client.post(self.url, self.payload(password="mahuta123"))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("password", response.data)
 
@@ -83,7 +104,9 @@ class LoginTests(APITestCase):
         self.assertEqual(unknown.data, wrong_password.data)
 
     def test_username_is_not_accepted_in_place_of_email(self):
-        response = self.client.post(reverse("login"), {"username": "kauri_fan", "password": PASSWORD})
+        response = self.client.post(
+            reverse("login"), {"username": "kauri_fan", "password": PASSWORD}
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
 
