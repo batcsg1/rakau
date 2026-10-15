@@ -6,6 +6,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     Anyone can read. Only authenticated users can create.
     Only the tree's owner (or staff) can update or delete it.
     """
+
     message = "You must own this tree to modify it."
 
     def has_permission(self, request, view):
@@ -27,6 +28,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     Anyone can read. Only staff users can create, update or delete.
     Used for shared reference data such as the species catalogue.
     """
+
     message = "Only administrators can modify species."
 
     def has_permission(self, request, view):

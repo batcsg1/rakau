@@ -36,7 +36,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         try:
             validate_password(attrs["password"], user)
         except DjangoValidationError as e:
-            raise serializers.ValidationError({"password": list(e.messages)})
+            raise serializers.ValidationError({"password": list(e.messages)}) from e
         return attrs
 
     def create(self, validated_data):
@@ -61,7 +61,7 @@ class LoginSerializer(serializers.Serializer):
             # Hash anyway so a missing email takes as long as a wrong password,
             # which stops response times revealing which emails have accounts
             User().set_password(attrs["password"])
-            raise AuthenticationFailed(self.default_error_message)
+            raise AuthenticationFailed(self.default_error_message) from None
 
         # authenticate() checks the password and rejects inactive accounts
         user = authenticate(

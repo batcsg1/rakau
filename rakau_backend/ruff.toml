@@ -1,0 +1,10 @@
+line-length = 100
+extend-exclude = ["migrations"]
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+# DRF's declarative class attributes (permission_classes, fields, ...) are never mutated
+ignore = ["RUF012"]
+
+[lint.isort]
+known-first-party = ["accounts", "trees", "rakau_backend"]

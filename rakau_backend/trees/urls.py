@@ -1,5 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from .views import TreeViewSet, SpeciesViewSet
+
+from .views import SpeciesViewSet, TreeViewSet
 
 router = DefaultRouter()
 router.register("trees", TreeViewSet)
