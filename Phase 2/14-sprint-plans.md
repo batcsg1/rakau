@@ -89,7 +89,19 @@ known risks/dependencies going in.
 | ↳ #14 Client: pagination / infinite scroll | Sub-issue | Load next page at scroll end. Depends on #12 |
 | **New this sprint** | | |
 | #21 API: Add custom permissions | Standalone | Object-level permission so only a tree's owner can update/delete it; read stays open to any authenticated user. Groundwork for the per-object "is manager" check in story 5 |
-| #22 API: add filtering for trees by species, condition, status and location | Standalone (REQ-03/REQ-04 groundwork) | Declarative `django-filter` filterset on the tree list endpoint; filter values passed as URL query params; invalid values return `400` |
+| #22 API: add filtering for trees by species, condition, status and location | Standalone (REQ-03/REQ-04 groundwork) | Declarative `django-filter` filterset (`TreeFilter`) on the tree list endpoint, shared by `/trees/` and `/trees/mine/`; filter values passed as URL query params; invalid values (unknown region, `min > max`, negative measurements) return `400`. Covers story 3 sub-issues 3.1 and 3.3 |
+| **Stretch: Should stories** | | Pulled in only once all twelve issues above are Done; anything unstarted at sprint close carries over to Sprint 3 |
+| **Feature: Filter trees by height, girth and region** | Parent | REQ-03 (Backlog story 3 — Should). Region choices, `?region=` filter and catalogue filter chips already exist |
+| ↳ API: height and girth range filters | Sub-issue | `height_min`/`height_max`, `girth_min`/`girth_max` on `TreeFilter`; index the numeric columns. Depends on #22 |
+| ↳ API tests: filters individually and combined | Sub-issue | Exact result sets per filter and combined; `400` for invalid values; cleared filters return the full list (AC1–AC3) |
+| ↳ Client: height and girth range inputs on catalogue | Sub-issue | Min/max inputs in `trees/index.tsx`, extend `TreeFilters`; active ranges shown as clearable chips |
+| ↳ Client: region filter on My Trees | Sub-issue | `mine.tsx` only filters by condition; reuse `FilterRow` and `REGION_OPTIONS` |
+| **Feature: Filter trees by significance status** | Parent | REQ-04 (Backlog story 4 — Should) |
+| ↳ API: `significance_status` field on `Tree` | Sub-issue | `TextChoices` (`none`, `locally_notable`, `heritage`, `protected`), default `none`, indexed; migration + serializer field |
+| ↳ API: significance filter + "significant only" toggle | Sub-issue | `?significance_status=` and `?significant_only=true` (excludes `none`) on `TreeFilter`. Depends on #22 |
+| ↳ API tests: significance filtering | Sub-issue | Per status; toggle excludes `none`; combined with region (AC1–AC3) |
+| ↳ Client: significance picker on Add Tree | Sub-issue | `ChipGroup` with "Unsure" mapped to `none`; mirror type and labels in `api/types.ts` |
+| ↳ Client: significance filter and badge | Sub-issue | Filter row + "Significant only" toggle on the catalogue; badge on cards and tree detail |
 
 **Definition of Done.**
 - #4–#7 meet the remaining REQ-01 acceptance criteria and #9–#14 meet the REQ-02 acceptance criteria in `Phase 1/02-backlog-requirements-analysis.md` (stories 1 and 2), checked by the tests listed against each sub-issue.
@@ -97,6 +109,7 @@ known risks/dependencies going in.
 - #11: an explicit two-user test proves one user cannot see another's trees on `/mine/`.
 - #21: API tests show a non-owner gets `403` on update/delete and the owner succeeds.
 - #22: API tests cover each filter on its own and combined, and assert the exact result sets plus a `400` for an invalid value.
+- Any stretch Should sub-issue marked Done meets its story's acceptance criteria in `Phase 1/02-backlog-requirements-analysis.md` (stories 3 and 4), checked by its API tests; unfinished stretch items move to Sprint 3 and are noted in the release notes.
 - No known regressions; CI (lint + tests) green on `main`.
 - Tagged `v0.2.0` per `Phase 2/12-releases.md`, with release notes completed.
 
@@ -106,6 +119,7 @@ known risks/dependencies going in.
 - Location capture (#7) is still the least-proven client piece. GPS auto-fill stays a stretch goal, not a blocker for Done.
 - Ownership scoping on `/mine/` (#9) is security-critical. #21 changes the permission classes on the same viewset, so re-run #11 after #21 lands to confirm scoping hasn't regressed.
 - Pull-to-refresh with a stale-cache fallback was planned as a REQ-02 sub-issue in Sprint 1 but isn't in this backlog. REQ-02's reliability requirement (cached list shown with a stale indicator) can't be signed off until it's scheduled.
-- #22 filters on species, condition, status and location, while story 3 specifies height, girth and region. Before calling REQ-03/REQ-04 met, decide whether to extend the filterset or update the backlog.
+- #22 filters on species, condition, status and location, while story 3 specifies height, girth and region. The REQ-03 stretch sub-issues extend the #22 filterset with height and girth ranges rather than building a second one.
+- Stretch dependency order: #22 before the REQ-03 range filters and the REQ-04 filter; REQ-04's model field before its filter.
 
 ---
