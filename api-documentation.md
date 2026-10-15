@@ -17,6 +17,21 @@ business logic. Clients consume it over HTTP with JSON request and response
 bodies. Core resources: trees (species, location, condition, dimensions,
 significance status), maintenance records, and health-status observations.
 
+## Quick start
+
+`setup.sh` in the repository root sets up, builds and starts both the API and the client.
+It creates the virtual environment, installs dependencies, writes a local `.env` for each
+project if one doesn't exist, applies migrations, type-checks the client, then runs the API
+on port 8000 and the Expo dev server on port 8081. Ctrl+C stops both.
+
+```bash
+./setup.sh               # set up and start everything
+./setup.sh --setup-only  # set up and build without starting the servers
+./setup.sh --check       # also run the API tests, Ruff, ESLint and Prettier first
+```
+
+On Windows, run it from Git Bash. The manual steps below do the same thing one at a time.
+
 ## Setup instructions
 
 Prerequisites:
@@ -29,7 +44,7 @@ Prerequisites:
 
 ```bash
 git clone -b project https://github.com/otago-polytechnic-bit-courses/s2-26-samuel-batchelor-id608001.git s2-26-samuel-batchelor-id608001
-cd s2-26-samuel-batchelor-id608001/api
+cd s2-26-samuel-batchelor-id608001/rakau_backend
 ```
 
 - Create and activate the virtual environment
@@ -61,15 +76,15 @@ python manage.py createsuperuser   # optional — Django admin access
 
 ## Environment variables
 
-Stored in `api/.env` (git-ignored). `api/.env.example` is committed with
+Stored in `rakau_backend/.env` (git-ignored). `rakau_backend/.env.example` is committed with
 placeholder values.
 
 | Name | Required | Purpose | Example |
 |---|---|---|---|
-| `SECRET_KEY` | yes | Django cryptographic signing key | `django-insecure-…` |
-| `DEBUG` | yes | Debug mode; `False` for production-like runs | `True` |
-| `ALLOWED_HOSTS` | yes | Comma-separated hosts the API will serve | `localhost,127.0.0.1` |
-| `CORS_ALLOWED_ORIGINS` | TODO | Origins the client runs from | `http://localhost:8081` |
+| `DJANGO_SECRET_KEY` | yes | Django cryptographic signing key | `django-insecure-…` |
+| `DJANGO_DEBUG` | no (default `False`) | Debug mode; `False` for production-like runs | `True` |
+| `DJANGO_ALLOWED_HOSTS` | no (default none) | Comma-separated hosts the API will serve | `localhost,127.0.0.1` |
+| `DJANGO_CORS_ALLOWED_ORIGINS` | no (default none) | Comma-separated origins the web client runs from | `http://localhost:8081` |
 
 ## Development instructions
 
@@ -96,7 +111,14 @@ python manage.py runserver 0.0.0.0:8000
 ```
 
 - API base URL (dev): `http://127.0.0.1:8000/api/`
-- Admin page URL: `http://127.0.0.1:8000/api/admin/`
+- Admin page URL: `http://127.0.0.1:8000/admin/`
+
+- Lint and format with Ruff (configured in `ruff.toml`)
+
+```bash
+ruff check .
+ruff format .
+```
 
 ## Testing instructions
 

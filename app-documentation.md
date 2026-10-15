@@ -24,6 +24,21 @@ Core functionality:
 This document covers the **React Native (Expo) client**. The Django REST API it
 consumes is documented in `api-documentation.md`.
 
+## Quick start
+
+`setup.sh` in the repository root sets up, builds and starts both the API and the client.
+It creates the virtual environment, installs dependencies, writes a local `.env` for each
+project if one doesn't exist, applies migrations, type-checks the client, then runs the API
+on port 8000 and the Expo dev server on port 8081. Ctrl+C stops both.
+
+```bash
+./setup.sh               # set up and start everything
+./setup.sh --setup-only  # set up and build without starting the servers
+./setup.sh --check       # also run the API tests, Ruff, ESLint and Prettier first
+```
+
+On Windows, run it from Git Bash. The manual steps below do the same thing one at a time.
+
 ## Setup instructions
 
 Prerequisites:
@@ -52,6 +67,12 @@ Environment variables:
 On a physical device the API URL must be your machine's LAN IP, not `localhost`.
 
 ## React Native development / build instructions
+
+```bash
+npm run typecheck            # TypeScript type check
+npm run lint                 # ESLint (eslint-config-expo)
+npm run format               # Prettier, with the Tailwind class-sorting plugin
+```
 
 ```bash
 npx expo start               # opens the Expo dev tools
