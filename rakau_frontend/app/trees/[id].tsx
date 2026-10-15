@@ -16,6 +16,7 @@ import { ApiError } from "../../api/client";
 import { getTree } from "../../api/treesApi";
 import { REGION_LABELS, type Tree } from "../../api/types";
 import { BackButton } from "../../components/BackButton";
+import { NavBar } from "../../components/NavBar";
 import { ConditionBadge } from "../../components/ConditionBadge";
 import colors from "../../constants/colors";
 
@@ -96,6 +97,7 @@ export default function TreeDetailScreen() {
     return (
       <SafeAreaView className="flex-1 bg-sand">
         <StatusBar style="dark" />
+        <NavBar />
         {backButton}
         <ActivityIndicator className="mt-10" color={colors.leaf} />
       </SafeAreaView>
@@ -106,6 +108,7 @@ export default function TreeDetailScreen() {
     return (
       <SafeAreaView className="flex-1 bg-sand">
         <StatusBar style="dark" />
+        <NavBar />
         {backButton}
         <View className="mx-6 mt-6 items-center rounded-2xl bg-white p-6">
           <Text className="text-center font-iosevka-semibold text-base text-bark">
@@ -126,6 +129,7 @@ export default function TreeDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-sand">
       <StatusBar style="dark" />
+      <NavBar />
       <ScrollView
         contentContainerClassName="pb-12"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

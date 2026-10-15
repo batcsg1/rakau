@@ -6,7 +6,7 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { deleteTree, getMyTrees } from "../../api/treesApi";
 import { CONDITION_LABELS, REGION_LABELS, type Condition, type Tree } from "../../api/types";
-import { BackButton } from "../../components/BackButton";
+import { NavBar } from "../../components/NavBar";
 import colors from "../../constants/colors";
 import { CONDITION_OPTIONS, type Option } from "../../constants/options";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
@@ -188,21 +188,19 @@ export default function MyTreesScreen() {
   const header = (
     <View>
       <View className="border-b border-bark/20 px-6 pb-4 pt-4">
-        <View className="flex-row items-center justify-between">
-          <BackButton fallback="/" className="" />
+        <View className="flex-row items-center justify-between gap-3">
+          <View>
+            <Text className="font-iosevka-bold text-3xl text-bark">My Trees</Text>
+            <Text className="font-iosevka text-xs text-bark/60">
+              {loading ? "loading…" : error && trees.length ? "saved copy" : `${count} recorded`}
+            </Text>
+          </View>
           <Pressable
             onPress={() => router.push("/trees/new")}
             className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
           >
             <Text className="font-iosevka-semibold text-sm text-white">+ Add tree</Text>
           </Pressable>
-        </View>
-
-        <View className="mt-4 flex-row items-end justify-between">
-          <Text className="font-iosevka-bold text-3xl text-bark">My Trees</Text>
-          <Text className="text-right font-iosevka text-xs text-bark/60">
-            {loading ? "loading…" : error && trees.length ? "saved copy" : `${count} recorded`}
-          </Text>
         </View>
 
         <ScrollView
@@ -314,6 +312,7 @@ export default function MyTreesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-sand">
       <StatusBar style="dark" />
+      <NavBar />
       <FlatList
         data={loading ? [] : trees}
         keyExtractor={(tree) => String(tree.id)}

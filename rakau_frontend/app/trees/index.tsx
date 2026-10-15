@@ -7,7 +7,7 @@ import { router } from "expo-router";
 import { getSpecies } from "../../api/speciesApi";
 import { getTrees } from "../../api/treesApi";
 import { REGION_LABELS, type Species, type Tree, type TreeFilters } from "../../api/types";
-import { BackButton } from "../../components/BackButton";
+import { NavBar } from "../../components/NavBar";
 import { ConditionBadge } from "../../components/ConditionBadge";
 import colors from "../../constants/colors";
 import {
@@ -159,23 +159,14 @@ export default function TreesScreen() {
   const header = (
     <View className="pb-4">
       <View className="px-6 pt-4">
-        <BackButton fallback="/" className="self-start" />
-        <View className="mt-3 flex-row items-center justify-between gap-3">
+        <View className="flex-row items-center justify-between gap-3">
           <Text className="font-iosevka-bold text-3xl text-bark">Tree catalogue</Text>
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={() => router.push("/trees/mine")}
-              className="rounded-full border border-leaf px-4 py-2 active:opacity-70"
-            >
-              <Text className="font-iosevka-semibold text-sm text-leaf">My trees</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/trees/new")}
-              className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
-            >
-              <Text className="font-iosevka-semibold text-sm text-white">+ Add</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={() => router.push("/trees/new")}
+            className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
+          >
+            <Text className="font-iosevka-semibold text-sm text-white">+ Add</Text>
+          </Pressable>
         </View>
         <Text className="mt-1 font-iosevka text-sm text-bark/70">
           Every tree recorded across Aotearoa.
@@ -253,6 +244,7 @@ export default function TreesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-sand">
       <StatusBar style="dark" />
+      <NavBar />
       <FlatList
         data={loading || error ? [] : trees}
         keyExtractor={(tree) => String(tree.id)}

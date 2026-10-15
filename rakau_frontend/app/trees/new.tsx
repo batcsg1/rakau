@@ -17,6 +17,7 @@ import { getSpecies } from "../../api/speciesApi";
 import { createTree } from "../../api/treesApi";
 import type { Condition, Region, Species, TreeInput } from "../../api/types";
 import { BackButton } from "../../components/BackButton";
+import { NavBar } from "../../components/NavBar";
 import { ChipGroup } from "../../components/ChipGroup";
 import { FormField } from "../../components/FormField";
 import colors from "../../constants/colors";
@@ -164,6 +165,7 @@ export default function NewTreeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-sand">
       <StatusBar style="dark" />
+      <NavBar />
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
