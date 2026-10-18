@@ -28,11 +28,14 @@ function measurement(value: string | null, unit: string): string {
   return value === null ? "—" : `${Number(value)} ${unit}`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-NZ", {
+// "2026-10-18T06:50:00Z" -> "18 October 2026 at 7:50 pm", in the device's time zone
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-NZ", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -256,8 +259,8 @@ export default function TreeDetailScreen() {
 
         <Section title="Record">
           <DetailRow label="Recorded by" value={tree.owner ?? "Unknown"} />
-          <DetailRow label="Recorded on" value={formatDate(tree.created_at)} />
-          <DetailRow label="Last updated" value={formatDate(tree.updated_at)} />
+          <DetailRow label="Recorded on" value={formatDateTime(tree.created_at)} />
+          <DetailRow label="Last updated" value={formatDateTime(tree.updated_at)} />
         </Section>
       </ScrollView>
     </SafeAreaView>
