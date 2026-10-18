@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Species, Tree
+from .models import Significance, Species, Tree
 
 
 class CreateTreeTests(APITestCase):
@@ -165,3 +165,114 @@ class SpeciesTests(APITestCase):
         response = self.client.get(f"{self.url}{self.species.id}/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["tree_count"], 1)
+
+
+class SignificanceFilterTests(APITestCase):
+    url = "/api/trees/"
+
+    def setUp(self):
+        self.user = User.objects.create_user("kauri_fan", email="kauri@example.com", password="x")
+        self.species = Species.objects.create(
+            common_name="Kauri", scientific_name="Agathis australis"
+        )
+        # One tree per status in Otago, plus a heritage tree in Canterbury for the
+        # combined significance + region filter
+        self.otago = {
+            status_value: self.make_tree(i, status_value, "otago")
+            for i, status_value in enumerate(Significance.values)
+        }
+        self.canterbury_heritage = self.make_tree(10, Significance.HERITAGE, "canterbury")
+
+    def make_tree(self, i, significance, region):
+        # Distinct longitudes keep each tree clear of the one-per-location constraint
+        return Tree.objects.create(
+            owner=self.user,
+            species=self.species,
+            latitude=-45.0,
+            longitude=170.0 + i / 1000,
+            condition="healthy",
+            region=region,
+            significance_status=significance,
+        )
+
+    def ids(self, response, url=None):
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data["results"] if url == "mine" else response.data
+        return {t["id"] for t in results}
+
+    def test_each_status_returns_only_trees_with_that_status(self):
+        for status_value in Significance.values:
+            with self.subTest(significance_status=status_value):
+                expected = {t.id for t in Tree.objects.filter(significance_status=status_value)}
+                response = self.client.get(self.url, {"significance_status": status_value})
+                self.assertEqual(self.ids(response), expected)
+
+    def test_significant_only_excludes_none(self):
+        response = self.client.get(self.url, {"significant_only": "true"})
+        expected = {t.id for t in Tree.objects.exclude(significance_status=Significance.NONE)}
+        self.assertEqual(self.ids(response), expected)
+        self.assertNotIn(self.otago[Significance.NONE].id, self.ids(response))
+
+    def test_significant_only_false_applies_no_filter(self):
+        response = self.client.get(self.url, {"significant_only": "false"})
+        self.assertEqual(self.ids(response), set(Tree.objects.values_list("id", flat=True)))
+
+    def test_significance_combined_with_region_satisfies_both(self):
+        response = self.client.get(
+            self.url, {"significance_status": "heritage", "region": "canterbury"}
+        )
+        self.assertEqual(self.ids(response), {self.canterbury_heritage.id})
+
+        response = self.client.get(self.url, {"significant_only": "true", "region": "otago"})
+        self.assertEqual(
+            self.ids(response),
+            {
+                self.otago[s].id
+                for s in (
+                    Significance.LOCALLY_NOTABLE,
+                    Significance.HERITAGE,
+                    Significance.PROTECTED,
+                )
+            },
+        )
+
+    def test_filters_apply_to_my_trees(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.get(f"{self.url}mine/", {"significance_status": "protected"})
+        self.assertEqual(self.ids(response, "mine"), {self.otago[Significance.PROTECTED].id})
+
+    def test_unknown_status_returns_400(self):
+        response = self.client.get(self.url, {"significance_status": "famous"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("significance_status", response.data)
+
+    def test_create_without_status_defaults_to_none(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.post(
+            self.url,
+            {
+                "species_slug": self.species.slug,
+                "latitude": -46.0,
+                "longitude": 171.0,
+                "condition": "healthy",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["significance_status"], Significance.NONE)
+
+    def test_create_with_invalid_status_returns_400(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.post(
+            self.url,
+            {
+                "species_slug": self.species.slug,
+                "latitude": -46.0,
+                "longitude": 171.0,
+                "condition": "healthy",
+                "significance_status": "famous",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("significance_status", response.data)
