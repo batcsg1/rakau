@@ -276,3 +276,75 @@ class SignificanceFilterTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("significance_status", response.data)
+
+
+class AddressFieldTests(APITestCase):
+    url = "/api/trees/"
+
+    def setUp(self):
+        self.user = User.objects.create_user("kauri_fan", email="kauri@example.com", password="x")
+        self.species = Species.objects.create(
+            common_name="Kauri", scientific_name="Agathis australis"
+        )
+        self.client.force_authenticate(self.user)
+
+    def payload(self, **overrides):
+        return {
+            "species_slug": self.species.slug,
+            "latitude": -45.8655,
+            "longitude": 170.5145,
+            "condition": "healthy",
+            **overrides,
+        }
+
+    def test_create_with_full_address(self):
+        address = {
+            "street_address": "51 Union Street",
+            "suburb": "North Dunedin",
+            "city": "Dunedin",
+            "postcode": "9016",
+        }
+        response = self.client.post(self.url, self.payload(**address), format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        for field, value in address.items():
+            self.assertEqual(response.data[field], value)
+
+    def test_address_is_optional(self):
+        response = self.client.post(self.url, self.payload(), format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        for field in ["street_address", "suburb", "city", "postcode"]:
+            self.assertEqual(response.data[field], "")
+
+    def test_postcode_with_leading_zero_is_kept(self):
+        response = self.client.post(self.url, self.payload(postcode="0627"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["postcode"], "0627")
+
+    def test_invalid_postcode_returns_400(self):
+        for postcode in ["901", "90160", "ABCD", "90 6"]:
+            with self.subTest(postcode=postcode):
+                response = self.client.post(
+                    self.url, self.payload(postcode=postcode), format="json"
+                )
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn("postcode", response.data)
+        self.assertEqual(Tree.objects.count(), 0)
+
+    def test_address_can_be_updated(self):
+        tree = Tree.objects.create(
+            owner=self.user,
+            species=self.species,
+            latitude=-45.8655,
+            longitude=170.5145,
+            condition="healthy",
+        )
+        response = self.client.patch(
+            f"{self.url}{tree.id}/",
+            {"street_address": "1 Queen Street", "city": "Auckland", "postcode": "1010"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        tree.refresh_from_db()
+        self.assertEqual(
+            (tree.street_address, tree.city, tree.postcode), ("1 Queen Street", "Auckland", "1010")
+        )

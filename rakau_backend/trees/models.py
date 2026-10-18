@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils.text import slugify
@@ -12,6 +12,9 @@ MIN_LONGITUDE, MAX_LONGITUDE = -180, 180
 MAX_HEIGHT_M = 150
 MAX_TRUNK_GIRTH_CM = 3000
 MAX_CROWN_SPREAD_M = 200
+
+# NZ post codes are always four digits, e.g. "9016" or "0627"
+NZ_POSTCODE_VALIDATOR = RegexValidator(r"^\d{4}$", "Enter a 4-digit NZ post code.")
 
 
 class Species(models.Model):
@@ -113,6 +116,11 @@ class Tree(models.Model):
         blank=True,
         db_index=True,
     )
+    # Optional street address, usually filled in from a Photon lookup on the client
+    street_address = models.CharField(max_length=200, blank=True)
+    suburb = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    postcode = models.CharField(max_length=4, blank=True, validators=[NZ_POSTCODE_VALIDATOR])
     significance_status = models.CharField(
         max_length=16,
         choices=Significance.choices,
