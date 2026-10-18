@@ -54,8 +54,13 @@ WSJF was considered and rejected: it requires a credible Cost of Delay (user-bus
 1. Given an authenticated user on the Add Tree screen, when they submit a valid species, location, and condition, then the API returns `201 Created` and the new record appears in their tree list. *Verify:* API integration test asserting status and response body, plus a manual client walkthrough.
 2. Given a required field is missing or invalid, when the form is submitted, then a `400` with per-field errors is shown and no record is created. *Verify:* unit test asserting `400`, the error shape, and an unchanged row count.
 3. Given an unauthenticated request, when `POST /api/trees/` is called, then `401` is returned. *Verify:* API test with no token.
+4. Given the owner of a tree, when they edit and save it from the tree page, then the changes are saved (`200`) and shown; invalid values return `400` with per-field errors. *Verify:* API test for `PATCH`, plus a manual client walkthrough.
+5. Given the owner of a tree, when they delete it and confirm, then it is removed (`204`) and no longer listed. *Verify:* API test asserting `204` and a reduced row count.
+6. Given a user who doesn't own the tree, when they try to edit or delete it, then `403` is returned and the edit/delete controls are hidden. *Verify:* API test with a second user.
 
-**Non-functional requirements and constraints.** Performance: submit round-trip under 1 s on Wi-Fi. Usability: inline validation with no loss of entered data on error. Security: authentication required; the owner is set server-side from the token and never trusted from the payload. Reliability: form state is preserved if the request fails so the user can retry.
+> Scope note: AC4–AC6 were added during Sprint 2. Keeping a record of trees includes correcting or removing a record, and the `PATCH`/`DELETE` endpoints and owner-only permission already existed from this story's API work, so editing and deleting is tracked here rather than as a new story.
+
+**Non-functional requirements and constraints.** Performance: submit round-trip under 1 s on Wi-Fi. Usability: inline validation with no loss of entered data on error; deleting asks for confirmation first. Security: authentication required; the owner is set server-side from the token and never trusted from the payload; only the owner (or staff) can edit or delete a tree. Reliability: form state is preserved if the request fails so the user can retry.
 
 ---
 
