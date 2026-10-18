@@ -75,6 +75,14 @@ class Region(models.TextChoices):
     SOUTHLAND = "southland", "Southland"
 
 
+# A tree's official or recognised standing. "none" also covers users who are unsure
+class Significance(models.TextChoices):
+    NONE = "none", "None"
+    LOCALLY_NOTABLE = "locally_notable", "Locally notable"
+    HERITAGE = "heritage", "Heritage"
+    PROTECTED = "protected", "Protected"
+
+
 class Tree(models.Model):
     owner = models.ForeignKey(
         User,
@@ -103,6 +111,12 @@ class Tree(models.Model):
         max_length=32,
         choices=Region.choices,
         blank=True,
+        db_index=True,
+    )
+    significance_status = models.CharField(
+        max_length=16,
+        choices=Significance.choices,
+        default=Significance.NONE,
         db_index=True,
     )
     height_m = models.DecimalField(

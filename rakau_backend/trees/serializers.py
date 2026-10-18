@@ -41,6 +41,7 @@ class TreeSerializer(serializers.ModelSerializer):
             "region",
             "condition",
             "is_present",
+            "significance_status",
             "height_m",
             "trunk_girth_cm",
             "crown_spread_m",
