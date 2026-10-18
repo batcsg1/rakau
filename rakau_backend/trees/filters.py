@@ -1,6 +1,22 @@
+from django import forms
 from django_filters import rest_framework as filters
 
 from .models import Condition, Region, Tree
+
+# (min, max) query-param pairs whose bounds must not be reversed
+RANGE_PAIRS = [("height_min", "height_max"), ("girth_min", "girth_max")]
+
+
+# Rejects a reversed range (e.g. height_min=10&height_max=5) with the same
+# {"field": ["message"]} shape as every other filter error
+class TreeFilterForm(forms.Form):
+    def clean(self):
+        cleaned_data = super().clean()
+        for min_name, max_name in RANGE_PAIRS:
+            low, high = cleaned_data.get(min_name), cleaned_data.get(max_name)
+            if low is not None and high is not None and low > high:
+                self.add_error(min_name, f"Must not be greater than {max_name}.")
+        return cleaned_data
 
 
 # Query-param filters for /api/trees/ and /api/trees/mine/. A value outside a field's
@@ -12,6 +28,22 @@ class TreeFilter(filters.FilterSet):
     region = filters.ChoiceFilter(choices=Region.choices)
     is_present = filters.BooleanFilter()
 
+    # Inclusive ranges; either bound can be given on its own
+    height_min = filters.NumberFilter(field_name="height_m", lookup_expr="gte", min_value=0)
+    height_max = filters.NumberFilter(field_name="height_m", lookup_expr="lte", min_value=0)
+    girth_min = filters.NumberFilter(field_name="trunk_girth_cm", lookup_expr="gte", min_value=0)
+    girth_max = filters.NumberFilter(field_name="trunk_girth_cm", lookup_expr="lte", min_value=0)
+
     class Meta:
         model = Tree
-        fields = ["species_slug", "condition", "region", "is_present"]
+        form = TreeFilterForm
+        fields = [
+            "species_slug",
+            "condition",
+            "region",
+            "is_present",
+            "height_min",
+            "height_max",
+            "girth_min",
+            "girth_max",
+        ]
