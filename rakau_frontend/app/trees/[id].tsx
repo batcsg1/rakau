@@ -18,6 +18,7 @@ import { REGION_LABELS, type Tree } from "../../api/types";
 import { BackButton } from "../../components/BackButton";
 import { NavBar } from "../../components/NavBar";
 import { ConditionBadge } from "../../components/ConditionBadge";
+import { SignificanceBadge } from "../../components/SignificanceBadge";
 import colors from "../../constants/colors";
 
 // "30.00" -> "30 m"; missing measurements show as a dash
@@ -144,7 +145,10 @@ export default function TreeDetailScreen() {
                 {tree.species_scientific_name}
               </Text>
             </View>
-            <ConditionBadge condition={tree.condition} />
+            <View className="items-end gap-2">
+              <ConditionBadge condition={tree.condition} />
+              <SignificanceBadge significance={tree.significance_status} />
+            </View>
           </View>
           <Text className="mt-3 font-iosevka text-sm text-bark/70">
             {tree.is_present ? "Still standing" : "No longer present"}

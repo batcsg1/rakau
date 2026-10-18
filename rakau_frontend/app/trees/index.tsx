@@ -11,10 +11,12 @@ import { REGION_LABELS, type Species, type Tree, type TreeFilters } from "../../
 import { NavBar } from "../../components/NavBar";
 import { ConditionBadge } from "../../components/ConditionBadge";
 import { RangeFilter } from "../../components/RangeFilter";
+import { SignificanceBadge } from "../../components/SignificanceBadge";
 import colors from "../../constants/colors";
 import {
   CONDITION_OPTIONS,
   REGION_OPTIONS,
+  SIGNIFICANCE_OPTIONS,
   STATUS_OPTIONS,
   type Option,
 } from "../../constants/options";
@@ -88,7 +90,10 @@ function TreeCard({ tree }: { tree: Tree }) {
             {tree.species_scientific_name}
           </Text>
         </View>
-        <ConditionBadge condition={tree.condition} />
+        <View className="items-end gap-2">
+          <ConditionBadge condition={tree.condition} />
+          <SignificanceBadge significance={tree.significance_status} />
+        </View>
       </View>
 
       <View className="mt-3 flex-row flex-wrap gap-x-4 gap-y-1">
@@ -232,6 +237,28 @@ export default function TreesScreen() {
         selected={filters.is_present}
         onSelect={(value) => setFilter("is_present", value)}
       />
+      <FilterRow
+        label="Significance"
+        options={SIGNIFICANCE_OPTIONS}
+        selected={filters.significance_status}
+        onSelect={(value) => setFilter("significance_status", value)}
+      />
+      <View className="mt-3 px-6">
+        <Pressable
+          onPress={() => setFilter("significant_only", filters.significant_only ? undefined : true)}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: !!filters.significant_only }}
+          className={`self-start rounded-full border px-4 py-2 active:opacity-70 ${
+            filters.significant_only ? "border-leaf bg-leaf" : "border-leaf/40 bg-white"
+          }`}
+        >
+          <Text
+            className={`font-iosevka text-sm ${filters.significant_only ? "text-white" : "text-bark"}`}
+          >
+            {filters.significant_only ? "✓ Significant only" : "Significant only"}
+          </Text>
+        </Pressable>
+      </View>
       {RANGES.map((range) => (
         <RangeFilter
           key={range.name}
