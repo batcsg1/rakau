@@ -13,6 +13,7 @@ import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { ApiError } from "../../../api/client";
+import { formatAddress } from "../../../api/photonApi";
 import { deleteTree, getTree } from "../../../api/treesApi";
 import { REGION_LABELS, type Tree } from "../../../api/types";
 import { BackButton } from "../../../components/BackButton";
@@ -246,6 +247,7 @@ export default function TreeDetailScreen() {
         </Section>
 
         <Section title="Location">
+          <DetailRow label="Address" value={formatAddress(tree) || "Not set"} />
           <DetailRow label="Region" value={tree.region ? REGION_LABELS[tree.region] : "Not set"} />
           <DetailRow label="Latitude" value={tree.latitude.toFixed(5)} />
           <DetailRow label="Longitude" value={tree.longitude.toFixed(5)} />

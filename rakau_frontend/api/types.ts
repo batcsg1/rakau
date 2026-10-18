@@ -76,6 +76,11 @@ export interface Tree {
   latitude: number;
   longitude: number;
   region: Region | ""; // blank is allowed on the model
+  // Optional street address; each part is "" when not set
+  street_address: string;
+  suburb: string;
+  city: string;
+  postcode: string;
   condition: Condition;
   is_present: boolean;
   significance_status: Significance;
@@ -94,6 +99,10 @@ export interface TreeInput {
   longitude: number;
   condition: Condition;
   region?: Region | "";
+  street_address?: string;
+  suburb?: string;
+  city?: string;
+  postcode?: string;
   is_present?: boolean;
   significance_status?: Significance;
   height_m?: number | null;

@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { ApiError, type FieldErrors } from "../api/errors";
+import type { AddressFields } from "../api/photonApi";
 import { getSpecies } from "../api/speciesApi";
 import type { Condition, Region, Significance, Species, Tree, TreeInput } from "../api/types";
+import { AddressSection } from "./AddressSection";
 import { ChipGroup } from "./ChipGroup";
 import { FormField } from "./FormField";
 import colors from "../constants/colors";
@@ -57,6 +59,12 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
   const [height, setHeight] = useState(toText(initial?.height_m));
   const [girth, setGirth] = useState(toText(initial?.trunk_girth_cm));
   const [crownSpread, setCrownSpread] = useState(toText(initial?.crown_spread_m));
+  const [address, setAddress] = useState<AddressFields>({
+    street_address: initial?.street_address ?? "",
+    suburb: initial?.suburb ?? "",
+    city: initial?.city ?? "",
+    postcode: initial?.postcode ?? "",
+  });
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +91,15 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
       .map((s) => ({ value: s.slug, label: s.common_name }));
   }, [species, speciesSearch, speciesSlug]);
 
+  // For "Fill from location": only once both coordinates are valid
+  const coordinates = useMemo(() => {
+    const lat = parseNumber(latitude);
+    const lng = parseNumber(longitude);
+    return isInRange(lat, LATITUDE_RANGE) && isInRange(lng, LONGITUDE_RANGE)
+      ? { latitude: lat, longitude: lng }
+      : null;
+  }, [latitude, longitude]);
+
   // Catches what the API would reject, so the user gets instant feedback without a round trip
   const validate = (): { input?: TreeInput; errors: FieldErrors } => {
     const errors: FieldErrors = {};
@@ -107,6 +124,10 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
     if (Number.isNaN(heightM)) errors.height_m = ["Enter a number, e.g. 12.5"];
     if (Number.isNaN(girthCm)) errors.trunk_girth_cm = ["Enter a number, e.g. 240"];
     if (Number.isNaN(crownM)) errors.crown_spread_m = ["Enter a number, e.g. 8"];
+    const postcode = address.postcode.trim();
+    if (postcode && !/^\d{4}$/.test(postcode)) {
+      errors.postcode = ["Enter a 4-digit NZ post code."];
+    }
 
     if (Object.keys(errors).length) return { errors };
 
@@ -118,6 +139,10 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
         latitude: lat as number,
         longitude: lng as number,
         region: region ?? "",
+        street_address: address.street_address.trim(),
+        suburb: address.suburb.trim(),
+        city: address.city.trim(),
+        postcode,
         is_present: isPresent,
         significance_status: significance,
         height_m: heightM,
@@ -220,6 +245,20 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
             </View>
           </View>
         </View>
+
+        <AddressSection
+          value={address}
+          onChange={setAddress}
+          coordinates={coordinates}
+          coordinatesEntered={latitude.trim() !== "" || longitude.trim() !== ""}
+          onCoordinatesFound={(lat, lng) => {
+            // ~10 cm precision is plenty; GPS isn't more accurate than that anyway
+            setLatitude(lat.toFixed(6));
+            setLongitude(lng.toFixed(6));
+          }}
+          errors={fieldErrors}
+          onRegionFound={setRegion}
+        />
 
         <ChipGroup
           label="Region"
