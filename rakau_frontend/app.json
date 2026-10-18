@@ -20,6 +20,16 @@
       "favicon": "./assets/rakau-badge-green-transparent.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-router", "expo-status-bar", "expo-secure-store"]
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Rākau uses your location to fill in where the tree you're recording is."
+        }
+      ]
+    ]
   }
 }
