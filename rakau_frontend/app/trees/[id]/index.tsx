@@ -10,16 +10,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
-import { ApiError } from "../../api/client";
-import { getTree } from "../../api/treesApi";
-import { REGION_LABELS, type Tree } from "../../api/types";
-import { BackButton } from "../../components/BackButton";
-import { NavBar } from "../../components/NavBar";
-import { ConditionBadge } from "../../components/ConditionBadge";
-import { SignificanceBadge } from "../../components/SignificanceBadge";
-import colors from "../../constants/colors";
+import { ApiError } from "../../../api/client";
+import { deleteTree, getTree } from "../../../api/treesApi";
+import { REGION_LABELS, type Tree } from "../../../api/types";
+import { BackButton } from "../../../components/BackButton";
+import { NavBar } from "../../../components/NavBar";
+import { ConditionBadge } from "../../../components/ConditionBadge";
+import { SignificanceBadge } from "../../../components/SignificanceBadge";
+import colors from "../../../constants/colors";
+import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useRefreshOnFocus } from "../../../hooks/useRefreshOnFocus";
 
 // "30.00" -> "30 m"; missing measurements show as a dash
 function measurement(value: string | null, unit: string): string {
@@ -61,6 +63,11 @@ export default function TreeDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const user = useCurrentUser();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const loadTree = useCallback(async () => {
     if (!Number.isInteger(treeId)) {
       setError("This isn't a valid tree link.");
@@ -83,16 +90,36 @@ export default function TreeDetailScreen() {
     loadTree().finally(() => setLoading(false));
   }, [loadTree]);
 
+  // Picks up changes saved on the edit screen
+  useRefreshOnFocus(loadTree);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadTree();
     setRefreshing(false);
   };
 
+  const onDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteTree(treeId);
+      // Back to My Trees if it's in the history (it refreshes on focus), otherwise open it
+      router.dismissTo("/trees/mine");
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : "Could not delete this tree");
+      setDeleting(false);
+    }
+  };
+
   const openInMaps = (latitude: number, longitude: number) =>
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
 
   const backButton = <BackButton fallback="/trees" className="self-start px-6 pt-4" />;
+
+  // Mirrors IsOwnerOrReadOnly: only the tree's owner (or staff) can change it
+  const canModify =
+    !!user && !!tree && (user.is_staff || (!!tree.owner && tree.owner === user.username));
 
   if (loading) {
     return (
@@ -154,6 +181,59 @@ export default function TreeDetailScreen() {
             {tree.is_present ? "Still standing" : "No longer present"}
             {tree.region ? ` · ${REGION_LABELS[tree.region]}` : ""}
           </Text>
+
+          {canModify && !confirmingDelete && (
+            <View className="mt-4 flex-row gap-3">
+              <Pressable
+                onPress={() => router.push(`/trees/${tree.id}/edit`)}
+                className="flex-1 items-center rounded-full bg-leaf px-6 py-3 active:opacity-80"
+              >
+                <Text className="font-iosevka-semibold text-sm text-white">Edit</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setConfirmingDelete(true)}
+                className="flex-1 items-center rounded-full border border-red-700 px-6 py-3 active:opacity-70"
+              >
+                <Text className="font-iosevka-semibold text-sm text-red-700">Delete</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* Shown in-app rather than with Alert, which does nothing on web */}
+          {canModify && confirmingDelete && (
+            <View className="mt-4 rounded-2xl border border-red-700/40 bg-white p-4">
+              <Text className="font-iosevka-semibold text-base text-bark">Delete this tree?</Text>
+              <Text className="mt-1 font-iosevka text-sm text-bark/70">
+                This removes the record for everyone and can't be undone.
+              </Text>
+              {deleteError && (
+                <Text className="mt-2 font-iosevka text-sm text-red-700">{deleteError}</Text>
+              )}
+              <View className="mt-4 flex-row gap-3">
+                <Pressable
+                  onPress={() => {
+                    setConfirmingDelete(false);
+                    setDeleteError(null);
+                  }}
+                  disabled={deleting}
+                  className="flex-1 items-center rounded-full border border-leaf px-6 py-3 active:opacity-70 disabled:opacity-50"
+                >
+                  <Text className="font-iosevka-semibold text-sm text-leaf">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={onDelete}
+                  disabled={deleting}
+                  className="flex-1 items-center rounded-full bg-red-700 px-6 py-3 active:opacity-80 disabled:opacity-50"
+                >
+                  {deleting ? (
+                    <ActivityIndicator color={colors.white} />
+                  ) : (
+                    <Text className="font-iosevka-semibold text-sm text-white">Delete</Text>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+          )}
         </View>
 
         <Section title="Measurements">
