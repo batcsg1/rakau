@@ -110,6 +110,7 @@ class Tree(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
+        db_index=True,
         validators=[MinValueValidator(0), MaxValueValidator(MAX_HEIGHT_M)],
     )
     trunk_girth_cm = models.DecimalField(
@@ -117,6 +118,7 @@ class Tree(models.Model):
         decimal_places=1,
         null=True,
         blank=True,
+        db_index=True,
         validators=[MinValueValidator(0), MaxValueValidator(MAX_TRUNK_GIRTH_CM)],
     )
     crown_spread_m = models.DecimalField(
