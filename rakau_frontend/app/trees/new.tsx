@@ -15,7 +15,7 @@ import { router } from "expo-router";
 import { ApiError, type FieldErrors } from "../../api/errors";
 import { getSpecies } from "../../api/speciesApi";
 import { createTree } from "../../api/treesApi";
-import type { Condition, Region, Species, TreeInput } from "../../api/types";
+import type { Condition, Region, Significance, Species, TreeInput } from "../../api/types";
 import { BackButton } from "../../components/BackButton";
 import { NavBar } from "../../components/NavBar";
 import { ChipGroup } from "../../components/ChipGroup";
@@ -26,6 +26,7 @@ import {
   LATITUDE_RANGE,
   LONGITUDE_RANGE,
   REGION_OPTIONS,
+  SIGNIFICANCE_PICKER_OPTIONS,
   STATUS_OPTIONS,
 } from "../../constants/options";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
@@ -52,6 +53,7 @@ export default function NewTreeScreen() {
   const [condition, setCondition] = useState<Condition>();
   const [region, setRegion] = useState<Region>();
   const [isPresent, setIsPresent] = useState(true);
+  const [significance, setSignificance] = useState<Significance>("none");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [height, setHeight] = useState("");
@@ -118,6 +120,7 @@ export default function NewTreeScreen() {
         longitude: lng as number,
         region: region ?? "",
         is_present: isPresent,
+        significance_status: significance,
         height_m: heightM,
         trunk_girth_cm: girthCm,
         crown_spread_m: crownM,
@@ -256,6 +259,14 @@ export default function NewTreeScreen() {
               selected={isPresent}
               onSelect={setIsPresent}
               errors={fieldErrors.is_present}
+            />
+
+            <ChipGroup
+              label="Significance"
+              options={SIGNIFICANCE_PICKER_OPTIONS}
+              selected={significance}
+              onSelect={setSignificance}
+              errors={fieldErrors.significance_status}
             />
 
             <View>

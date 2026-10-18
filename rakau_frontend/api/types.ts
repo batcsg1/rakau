@@ -46,6 +46,16 @@ export const REGION_LABELS: Record<Region, string> = {
   southland: "Southland",
 };
 
+// Mirrors trees.models.Significance — "none" also covers trees whose status is unknown
+export type Significance = "none" | "locally_notable" | "heritage" | "protected";
+
+export const SIGNIFICANCE_LABELS: Record<Significance, string> = {
+  none: "None",
+  locally_notable: "Locally notable",
+  heritage: "Heritage",
+  protected: "Protected",
+};
+
 // A species from GET /api/species/
 export interface Species {
   id: number;
@@ -68,6 +78,7 @@ export interface Tree {
   region: Region | ""; // blank is allowed on the model
   condition: Condition;
   is_present: boolean;
+  significance_status: Significance;
   // DecimalFields — DRF sends decimals as strings, e.g. "30.00"
   height_m: string | null;
   trunk_girth_cm: string | null;
@@ -84,6 +95,7 @@ export interface TreeInput {
   condition: Condition;
   region?: Region | "";
   is_present?: boolean;
+  significance_status?: Significance;
   height_m?: number | null;
   trunk_girth_cm?: number | null;
   crown_spread_m?: number | null;
@@ -95,6 +107,8 @@ export interface TreeFilters {
   condition?: Condition;
   region?: Region;
   is_present?: boolean;
+  significance_status?: Significance;
+  significant_only?: boolean;
   height_min?: number;
   height_max?: number;
   girth_min?: number;
