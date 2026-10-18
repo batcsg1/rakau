@@ -95,6 +95,10 @@ export interface TreeFilters {
   condition?: Condition;
   region?: Region;
   is_present?: boolean;
+  height_min?: number;
+  height_max?: number;
+  girth_min?: number;
+  girth_max?: number;
 }
 
 // DRF PageNumberPagination envelope
