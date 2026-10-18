@@ -1,8 +1,10 @@
 from django.db.models import Count
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
+from .filters import TreeFilter
 from .models import Species, Tree
 from .pagination import MyTreesPagination
 from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
@@ -13,30 +15,22 @@ class TreeViewSet(viewsets.ModelViewSet):
     queryset = Tree.objects.all()
     serializer_class = TreeSerializer
     permission_classes = [IsOwnerOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TreeFilter
 
     def get_queryset(self):
-        queryset = Tree.objects.select_related("owner", "species")
-        params = self.request.query_params
-
-        if species := params.get("species_slug"):
-            queryset = queryset.filter(species__slug=species)
-        if condition := params.get("condition"):
-            queryset = queryset.filter(condition=condition)
-        if region := params.get("region"):
-            queryset = queryset.filter(region=region)
-        if (present := params.get("is_present")) is not None:
-            queryset = queryset.filter(is_present=present.lower() == "true")
-        return queryset
+        return Tree.objects.select_related("owner", "species")
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
     # GET /api/trees/mine/?page=n — the caller's own trees, newest first, 20 per page.
     # Owner scoping happens in the queryset, so another user's trees can never be returned;
-    # the list filters (condition, region, ...) from get_queryset still apply
+    # the TreeFilter query params (condition, region, ...) still apply
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def mine(self, request):
-        queryset = self.get_queryset().filter(owner=request.user).order_by("-created_at")
+        queryset = self.filter_queryset(self.get_queryset()).filter(owner=request.user)
+        queryset = queryset.order_by("-created_at")
         paginator = MyTreesPagination()
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = self.get_serializer(page, many=True)
