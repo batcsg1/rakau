@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "trees",
     "accounts",
     "rest_framework",
+    "django_filters",
     "corsheaders",
 ]
 
