@@ -1,7 +1,7 @@
 from django import forms
 from django_filters import rest_framework as filters
 
-from .models import Condition, Region, Tree
+from .models import Condition, Region, Significance, Tree
 
 # (min, max) query-param pairs whose bounds must not be reversed
 RANGE_PAIRS = [("height_min", "height_max"), ("girth_min", "girth_max")]
@@ -27,6 +27,9 @@ class TreeFilter(filters.FilterSet):
     condition = filters.ChoiceFilter(choices=Condition.choices)
     region = filters.ChoiceFilter(choices=Region.choices)
     is_present = filters.BooleanFilter()
+    significance_status = filters.ChoiceFilter(choices=Significance.choices)
+    # ?significant_only=true hides "none" trees; false (or leaving it out) applies no filter
+    significant_only = filters.BooleanFilter(method="filter_significant_only")
 
     # Inclusive ranges; either bound can be given on its own
     height_min = filters.NumberFilter(field_name="height_m", lookup_expr="gte", min_value=0)
@@ -42,8 +45,15 @@ class TreeFilter(filters.FilterSet):
             "condition",
             "region",
             "is_present",
+            "significance_status",
+            "significant_only",
             "height_min",
             "height_max",
             "girth_min",
             "girth_max",
         ]
+
+    def filter_significant_only(self, queryset, name, value):
+        if value:
+            return queryset.exclude(significance_status=Significance.NONE)
+        return queryset
