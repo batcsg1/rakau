@@ -9,6 +9,7 @@ import { CONDITION_LABELS, REGION_LABELS, type Condition, type Tree } from "../.
 import { NavBar } from "../../components/NavBar";
 import colors from "../../constants/colors";
 import { CONDITION_OPTIONS, type Option } from "../../constants/options";
+import { useRefreshOnFocus } from "../../hooks/useRefreshOnFocus";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 
 // Mirrors trees.pagination.MyTreesPagination.page_size
@@ -126,6 +127,9 @@ export default function MyTreesScreen() {
     setLoading(true);
     loadFirstPage().finally(() => setLoading(false));
   }, [checkingAuth, loadFirstPage]);
+
+  // Coming back from a tree's page picks up any edit or delete made there
+  useRefreshOnFocus(loadFirstPage);
 
   const onRefresh = async () => {
     setRefreshing(true);

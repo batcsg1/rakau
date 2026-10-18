@@ -13,6 +13,7 @@ import { ConditionBadge } from "../../components/ConditionBadge";
 import { RangeFilter } from "../../components/RangeFilter";
 import { SignificanceBadge } from "../../components/SignificanceBadge";
 import colors from "../../constants/colors";
+import { useRefreshOnFocus } from "../../hooks/useRefreshOnFocus";
 import {
   CONDITION_OPTIONS,
   REGION_OPTIONS,
@@ -172,6 +173,9 @@ export default function TreesScreen() {
       cancelled = true;
     };
   }, [filters]);
+
+  // Coming back from a tree's page picks up any edit or delete made there
+  useRefreshOnFocus(loadTrees);
 
   const onRefresh = async () => {
     setRefreshing(true);
