@@ -42,8 +42,8 @@ Tasks are read from a printed task card, in this order. Each card gives the info
 
 | ID | Scenario / task given to participant | Feature | Maps to AC | Success = |
 |---|---|---|---|---|
-| T1 | "You've just joined Rākau. Find the list of trees *you* have recorded." | 2 | F2-AC2 | Reaches My Trees, sees the empty-state message, and identifies the "Add your first tree" button as the next step |
-| T2 | "You've found a healthy **kōwhai** at **149 Forfar Street, Dunedin**. Record it." | 1, 2 | F1-AC1, F2-AC1 | Tree saved with kōwhai, healthy and a location; it appears at the **top** of My Trees, and only the participant's own trees are shown |
+| T1 | "You've just joined Rakau and found a healthy **kōwhai** at **149 Forfar Street, Dunedin**. Record it." | 1 | F1-AC1, F2-AC1 | Tree saved with kōwhai, healthy and a location; it appears at the **top** of My Trees, and only the participant's own trees are shown |
+| T2 | "Find the list of trees *you* have recorded." | 2 | F2-AC1 | Reaches My Trees, sees the empty-state message, and identifies the "Add your first tree" button as the next step |
 | T3 | "Record a **stressed rimu**. Your notes say latitude **-458.87**, longitude **170.5**." (deliberate typo) | 1 | F1-AC2 | Participant notices the latitude error message, corrects it to -45.887 and saves; afterwards My Trees has exactly one new rimu, not two |
 | T4 | "On a second look, the kōwhai from T2 is **stressed**, not healthy. Update it." | 1 | F1-AC4 | Opens the kōwhai, edits and saves; the tree page shows Stressed |
 | T5 | "The rimu from T3 was recorded by mistake. Remove it." | 1, 2 | F1-AC5 | Deletes it after confirming; it's gone from My Trees |
