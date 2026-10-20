@@ -27,28 +27,57 @@ Required steps:
 
 ### Features under test
 
+The two features selected in Phase 1 (`Phase 1/06-design-reflection.md`). The acceptance criteria are from `Phase 1/02-backlog-requirements-analysis.md`.
+
 | Feature | Phase 1 acceptance criteria (from file 02) |
 |---|---|
-| Feature 1 — TODO | AC1: TODO / AC2: TODO / AC3: TODO |
-| Feature 2 — TODO | AC1: TODO / AC2: TODO / AC3: TODO |
+| Feature 1: Add a tree with species, location and condition (REQ-01) | AC1: a valid species, location and condition saves the tree, and it appears in My Trees / AC2: a missing or invalid field shows per-field errors and saves nothing / AC3: a signed-out user can't add a tree / AC4: the owner can edit a tree and see the change / AC5: the owner can delete a tree after confirming, and it's no longer listed / AC6: a non-owner can't edit or delete, and the controls are hidden |
+| Feature 2: My Trees list (REQ-02) | AC1: only the user's own trees are listed, newest first / AC2: with no trees, an empty-state message and an "Add tree" button are shown / AC3: with more than 20 trees, scrolling to the end loads the next page |
+
+The API side of each criterion is covered by automated tests (`rakau_backend/trees/tests.py`). These sessions check the same criteria from a real user's point of view in the client.
 
 ### Scenarios (mapped to acceptance criteria)
 
+Tasks are read from a printed task card, in this order. Each card gives the information a participant needs (species, condition, address or coordinates) but **not** which screen or button to use. Each participant logs in as their own empty account (`uat_p1`, `uat_p2`, …) created by `python manage.py seed_uat`.
+
 | ID | Scenario / task given to participant | Feature | Maps to AC | Success = |
 |---|---|---|---|---|
-| T1 | "TODO: do X starting from the home screen" | 1 | F1-AC1 | TODO observable outcome |
-| T2 | TODO | 1 | F1-AC2 | TODO |
-| T3 | TODO | 2 | F2-AC1 | TODO |
-| T4 | TODO | 2 | F2-AC2 | TODO |
+| T1 | "You've just joined Rākau. Find the list of trees *you* have recorded." | 2 | F2-AC2 | Reaches My Trees, sees the empty-state message, and identifies the "Add your first tree" button as the next step |
+| T2 | "You've found a healthy **kōwhai** at **149 Forfar Street, Dunedin**. Record it." | 1, 2 | F1-AC1, F2-AC1 | Tree saved with kōwhai, healthy and a location; it appears at the **top** of My Trees, and only the participant's own trees are shown |
+| T3 | "Record a **stressed rimu**. Your notes say latitude **-458.87**, longitude **170.5**." (deliberate typo) | 1 | F1-AC2 | Participant notices the latitude error message, corrects it to -45.887 and saves; afterwards My Trees has exactly one new rimu, not two |
+| T4 | "On a second look, the kōwhai from T2 is **stressed**, not healthy. Update it." | 1 | F1-AC4 | Opens the kōwhai, edits and saves; the tree page shows Stressed |
+| T5 | "The rimu from T3 was recorded by mistake. Remove it." | 1, 2 | F1-AC5 | Deletes it after confirming; it's gone from My Trees |
+| T6 | "In the catalogue, open the **tōtara** recorded by someone else (`uat_other`). Could you change that record?" | 1 | F1-AC6 | No Edit or Delete controls are shown, and the participant concludes they can't change it |
+| T7 | (Facilitator logs in as `uat_collector`, which has 25 trees.) "This account belongs to a keen recorder. Find the **oldest** tree they've recorded." | 2 | F2-AC3 | Scrolls past the first 20; the next page loads by itself and the participant reaches tree 25 ("all 25 trees shown") |
+| T8 | (Facilitator logs out.) "You're not logged in. Try to record a tree." | 1 | F1-AC3 | The app asks them to log in before any tree can be saved; after logging in, they're back on the Add Tree form |
 
 ### Method
 
-- Session type: moderated / observed (at least one must be) — TODO
-- Environment: TODO (device, build/tag used)
-- Data recorded per task: completed unaided / completed with hint / failed; time; observations; verbatim quotes
-- Ethics: participants told it is the software being tested, not them; consent to notes; data anonymised
+- **Session type:** moderated, observed, in person, one participant at a time, about 30 minutes. Participants think aloud. The facilitator only gives a hint if a participant is stuck for 2 minutes or asks for help; that task is then recorded as "completed with hint".
+- **Environment:**
+  - The facilitator's Android phone running Expo Go, connected to the API on the facilitator's laptop over the same Wi-Fi.
+  - The build is commit `TODO: hash` (`v0.2.0` plus the `seed_uat` command), the same for every session. Record the hash before the first session.
+  - The database is reset with `seed_uat` before each session.
+- **Data recorded per task:**
+  - outcome: completed unaided / completed with hint / failed
+  - time on task, from finishing reading the card to success or giving up
+  - observations: where they tapped first, hesitations, wrong turns, error messages seen
+  - verbatim quotes
+
+  All are recorded on a printed observation sheet per participant and typed up into `Phase 2/uat/P<n>.md` the same day.
+- **After the tasks:** the questionnaire below, on paper, answered alone, then the two open questions asked verbally and noted word for word.
+- **Pilot:** one dry run with someone who isn't a participant, to check task cards, timing and the network setup. Pilot results are not counted.
+- **Ethics:**
+  - Participants are told the app is being tested, not them, and that they can stop at any time.
+  - Verbal consent is recorded for taking notes and using anonymised quotes.
+  - No names, contact details or recordings of faces go into the repo; participants are P1, P2, ….
+  - **No data is invented:** if a session doesn't happen, its rows stay empty.
 
 ### Participants (anonymised)
+
+<!-- Fill in only after each real session. Intended users from the backlog: home
+gardener, citizen scientist, conservation group member, arborist. None of them
+may have been involved in building or designing Rākau. -->
 
 | ID | Relationship to you | Why they represent an intended user | Involved in development? |
 |---|---|---|---|
