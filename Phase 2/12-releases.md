@@ -130,6 +130,15 @@ npx expo start                    # i = iOS simulator, a = Android emulator
   - A shared nav bar with Catalogue and My trees links, and an account menu with logout (#41).
 
 *REQ-01 Add a tree (with edit and delete)*
+
+- Adding a tree:
+
+<img width="464" height="1001" alt="image" src="https://github.com/user-attachments/assets/a639477b-5765-49d1-b33d-3a12610a0fc9" />
+
+- Editing or updating a tree
+
+<img width="472" height="1001" alt="image" src="https://github.com/user-attachments/assets/e88a64de-a829-46c9-997f-7d30d53c0daf" />
+
 - **API:**
   - The owner is set from the logged-in user when a tree is created.
   - Field validation (#4): the species must be an active one, the condition one of the fixed choices, and latitude/longitude within range. Invalid input returns `400` with per-field messages (`{"field": ["message"]}`) and changes nothing.
@@ -153,6 +162,11 @@ npx expo start                    # i = iOS simulator, a = Android emulator
     - Deleting asks for confirmation on the page.
 
 *REQ-02 My Trees list*
+
+- List of an indvidual user's recorded trees.
+
+<img width="464" height="977" alt="image" src="https://github.com/user-attachments/assets/afc9d280-d8ad-46f4-8121-53c95515322b" />
+
 - **API:**
   - `GET /api/trees/mine/` (#9) returns only the logged-in user's trees, newest first, 20 per page.
   - `GET /api/trees/{id}/` (#10) returns a single tree.
@@ -168,6 +182,11 @@ npx expo start                    # i = iOS simulator, a = Android emulator
   - The catalogue, My Trees and tree pages reload when you return to them, so edits and deletes show straight away.
 
 *REQ-03 Filter by height, girth and region*
+
+- Filtering a tree by **Region**, **Height** and **Region**
+
+<img width="463" height="991" alt="image" src="https://github.com/user-attachments/assets/3e635158-9dd8-4f4c-856e-9cc5d3b43401" />
+
 - **API:**
   - Filtering is now done by a declarative django-filter `TreeFilter` (#30), applied to both `/api/trees/` and `/api/trees/mine/`.
   - Unknown `region` or `condition` values return `400` instead of an empty list.
@@ -178,6 +197,12 @@ npx expo start                    # i = iOS simulator, a = Android emulator
 - **Client:** the catalogue has height and girth min/max inputs, active ranges shown as clearable chips, and the API's `400` messages shown under the inputs (#33).
 
 *REQ-04 Filter by significance*
+
+- Filtering a tree by local **significance** status
+
+<img width="430" height="502" alt="image" src="https://github.com/user-attachments/assets/651cdedf-5ed9-4238-b85e-05a1c5a6a28e" />
+
+
 - **API:** `?significance_status=<status>` and `?significant_only=true` on both list endpoints (#37). Both combine with the other filters.
 - **Client:**
   - A Significance filter row and a "Significant only" toggle on the catalogue.
@@ -270,8 +295,8 @@ npx expo start                    # i = iOS simulator, a = Android emulator
   - Invalid filter values now return `400` instead of an empty list.
   - Tree writes are limited to the owner or staff.
   - Species writes are staff-only, but species reads no longer need a login.
-  - The client's tree detail route moved from `app/trees/[id].tsx` to `app/trees/[id]/index.tsx`. The URL `/trees/{id}` is unchanged.
-
+  - The client's tree detail route moved from `app/trees/[id].tsx` to `app/trees/
+  
 ---
 
 ## Release notes template (copy per release)
