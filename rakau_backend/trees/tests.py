@@ -417,3 +417,113 @@ class TreeValidationTests(APITestCase):
         self.assertIn("condition", response.data)
         tree.refresh_from_db()
         self.assertEqual((tree.latitude, tree.condition), (-45.87, "healthy"))
+
+
+class TreePermissionTests(APITestCase):
+    """IsOwnerOrReadOnly: anyone reads, only the owner (or staff) updates or deletes."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user("kauri_fan", email="kauri@example.com", password="x")
+        self.other = User.objects.create_user("rimu_fan", email="rimu@example.com", password="x")
+        self.staff = User.objects.create_user(
+            "ranger", email="ranger@example.com", password="x", is_staff=True
+        )
+        self.species = Species.objects.create(
+            common_name="Kauri", scientific_name="Agathis australis"
+        )
+        self.tree = Tree.objects.create(
+            owner=self.owner,
+            species=self.species,
+            latitude=-45.87,
+            longitude=170.5,
+            condition="healthy",
+        )
+        self.url = f"/api/trees/{self.tree.id}/"
+
+    def test_anyone_can_read_a_tree(self):
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+
+    def test_owner_can_update(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.patch(self.url, {"condition": "stressed"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["condition"], "stressed")
+        self.tree.refresh_from_db()
+        self.assertEqual(self.tree.condition, "stressed")
+
+    def test_owner_can_delete(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Tree.objects.count(), 0)
+
+    def test_other_user_cannot_update_or_delete(self):
+        self.client.force_authenticate(self.other)
+        patch = self.client.patch(self.url, {"condition": "dead"}, format="json")
+        self.assertEqual(patch.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.delete(self.url).status_code, status.HTTP_403_FORBIDDEN)
+        self.tree.refresh_from_db()
+        self.assertEqual(self.tree.condition, "healthy")
+        self.assertEqual(Tree.objects.count(), 1)
+
+    def test_unauthenticated_cannot_update_or_delete(self):
+        patch = self.client.patch(self.url, {"condition": "dead"}, format="json")
+        self.assertEqual(patch.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(self.client.delete(self.url).status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Tree.objects.count(), 1)
+
+    def test_staff_can_update_any_tree(self):
+        self.client.force_authenticate(self.staff)
+        response = self.client.patch(self.url, {"condition": "stressed"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_tree_without_owner_can_only_be_changed_by_staff(self):
+        self.tree.owner = None
+        self.tree.save()
+        self.client.force_authenticate(self.owner)
+        response = self.client.patch(self.url, {"condition": "stressed"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.client.force_authenticate(self.staff)
+        response = self.client.patch(self.url, {"condition": "stressed"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class SpeciesPermissionTests(APITestCase):
+    """IsAdminOrReadOnly: anyone reads the species list, only staff change it."""
+
+    url = "/api/species/"
+
+    def setUp(self):
+        self.user = User.objects.create_user("kauri_fan", email="kauri@example.com", password="x")
+        self.staff = User.objects.create_user(
+            "ranger", email="ranger@example.com", password="x", is_staff=True
+        )
+        self.species = Species.objects.create(
+            common_name="Kauri", scientific_name="Agathis australis"
+        )
+        self.new_species = {"common_name": "Rimu", "scientific_name": "Dacrydium cupressinum"}
+
+    def test_anyone_can_read_species(self):
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+
+    def test_regular_user_cannot_create_update_or_delete(self):
+        self.client.force_authenticate(self.user)
+        detail = f"{self.url}{self.species.id}/"
+        create = self.client.post(self.url, self.new_species, format="json")
+        update = self.client.patch(detail, {"common_name": "Not Kauri"}, format="json")
+        delete = self.client.delete(detail)
+        for response in (create, update, delete):
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Species.objects.count(), 1)
+        self.species.refresh_from_db()
+        self.assertEqual(self.species.common_name, "Kauri")
+
+    def test_unauthenticated_cannot_create(self):
+        response = self.client.post(self.url, self.new_species, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_staff_can_create(self):
+        self.client.force_authenticate(self.staff)
+        response = self.client.post(self.url, self.new_species, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Species.objects.count(), 2)
