@@ -111,8 +111,10 @@ class MyTreesTests(APITestCase):
         self.assertIsNone(page1["previous"])
 
         page2 = self.client.get(self.url, {"page": 2}).data
+        self.assertEqual(page2["count"], 25)
         self.assertEqual(len(page2["results"]), 5)
         self.assertIsNone(page2["next"])
+        self.assertIsNotNone(page2["previous"])
 
     def test_page_out_of_range_returns_404(self):
         self.make_trees(self.user, 1)
