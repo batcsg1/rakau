@@ -38,7 +38,7 @@ The API side of each criterion is covered by automated tests (`rakau_backend/tre
 
 ### Scenarios (mapped to acceptance criteria)
 
-Tasks are read from a printed task card, in this order. Each card gives the information a participant needs (species, condition, address or coordinates) but **not** which screen or button to use. Each participant logs in as their own empty account (`uat_p1`, `uat_p2`, …) created by `python manage.py seed_uat`.
+Tasks are read from a printed task card, in this order. Each card gives the information a participant needs (species, condition, address or coordinates) but **not** which screen or button to use.
 
 | ID | Scenario / task given to participant | Feature | Maps to AC | Success = |
 |---|---|---|---|---|
