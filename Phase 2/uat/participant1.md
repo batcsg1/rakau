@@ -13,7 +13,6 @@ Scenarios, success conditions and the questionnaire: `Phase 2/11-user-acceptance
 |---|---|
 | Participant | Anon |
 | Date | 21/10/2026 |
-| Duration | |
 | Session type | Moderated, **observed**, in person |
 | Device | Emulated Pixel 8 |
 
