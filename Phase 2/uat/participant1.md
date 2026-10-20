@@ -22,7 +22,7 @@ Scenarios, success conditions and the questionnaire: `Phase 2/11-user-acceptance
 Outcome: **Passed** / **Partial** / **Failed**. Time is from finishing reading the card to success or giving up.
 
 
-### T1: Record the kōwhai at 149 Forfar Street (F1-AC1, F2-AC1)
+### T1: Register as a new user Record the kōwhai at 149 Forfar Street (F1-AC1, F2-AC1)
 
 Outcome: Passed
 
