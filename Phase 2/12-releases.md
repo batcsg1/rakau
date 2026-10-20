@@ -15,7 +15,7 @@ development.
 | Tag | Sprint | Date | Summary |
 |---|---|---|---|
 | v0.1.0 | Sprint 1 | 2026-10-12 | Species/Tree API with CRUD + filtering; Expo client with home screen and filterable tree catalogue |
-| v0.2.0 | Sprint 2 | TODO | TODO |
+| v0.2.0 | Sprint 2 | 2026-10-20 | JWT auth; Add, edit and delete a tree; My Trees with infinite scroll; height/girth/region and significance filters; street address with autocomplete and GPS; 60 API tests |
 | v0.3.0 | Sprint 3 | TODO | TODO |
 | v0.4.0 | UAT Sprint | TODO | TODO (includes UAT evidence bundle) |
 
@@ -106,6 +106,171 @@ npx expo start                    # i = iOS simulator, a = Android emulator
   - API: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_CORS_ALLOWED_ORIGINS` in `.env.example`. They aren't read yet.
   - Client: `EXPO_PUBLIC_API_URL`. If it isn't set, the client uses `http://127.0.0.1:8000/api`.
 - Breaking changes: none. This is the first release.
+
+---
+
+### v0.2.0 — Sprint 2 — 2026-10-20
+
+**Delivered**
+
+*Planning and documentation*
+- Features 3 and 4 added to the sprint backlog, each split into GitHub sub-issues (API, API tests, client).
+- Feature 1 (REQ-01) extended with acceptance criteria AC4–AC6 for editing and deleting a tree.
+- `setup.sh` usage, lint commands and corrected env var names in the API and app documentation.
+
+*Authentication (#15)*
+- **API:** an `accounts` app with these endpoints:
+  - `POST /api/auth/register/`, which also takes first and last name
+  - `POST /api/auth/login/`, which returns a SimpleJWT access/refresh pair
+  - `POST /api/auth/token/refresh/`
+  - `GET /api/auth/me/`
+- **Client:**
+  - Login and register screens. After logging in, the app returns to the screen that asked for it.
+  - Tokens are stored in `expo-secure-store`, and an expired access token is refreshed automatically.
+  - A shared nav bar with Catalogue and My trees links, and an account menu with logout (#41).
+
+*REQ-01 Add a tree (with edit and delete)*
+- **API:**
+  - The owner is set from the logged-in user when a tree is created.
+  - Field validation (#4): the species must be an active one, the condition one of the fixed choices, and latitude/longitude within range. Invalid input returns `400` with per-field messages (`{"field": ["message"]}`) and changes nothing.
+  - Recording the same species at the same location twice now returns `400` instead of a `500` server error.
+  - Custom permissions (#21): only a tree's owner or staff can change it (`IsOwnerOrReadOnly`). Species can be read by anyone, but only staff can change them (`IsAdminOrReadOnly`).
+  - `significance_status` field (#36): `none`, `locally_notable`, `heritage` or `protected`, defaulting to `none`.
+  - Optional street address fields (#45): `street_address`, `suburb`, `city` and a 4-digit NZ `postcode`.
+  - `Tree` and `Species` are registered in the Django admin, and species detail includes `tree_count`.
+- **Client:**
+  - Add Tree screen (#6):
+    - Species search, condition, latitude/longitude, region, present/removed status, and significance. Leaving significance on "Unsure" saves `none` (#39).
+    - Optional height, trunk girth and crown spread.
+    - Checks the fields before sending and shows the API's per-field errors.
+  - Address section (#45):
+    - Suggestions from Photon (OpenStreetMap) while typing.
+    - Choosing an address also selects its region.
+    - **Fill from location** finds the address for the coordinates entered, or the coordinates for an address. When neither is entered, it uses the phone's GPS (#7).
+  - Edit and delete (#42):
+    - The owner sees Edit and Delete on a tree's page.
+    - Editing reuses the Add Tree form.
+    - Deleting asks for confirmation on the page.
+
+*REQ-02 My Trees list*
+- **API:**
+  - `GET /api/trees/mine/` (#9) returns only the logged-in user's trees, newest first, 20 per page.
+  - `GET /api/trees/{id}/` (#10) returns a single tree.
+- **Client:**
+  - My Trees screen (#12):
+    - Condition filter, pull to refresh, and an empty state with an "Add your first tree" button (#13).
+    - Infinite scroll that loads the next page near the end of the list (#14).
+    - Undo straight after adding a tree.
+  - Tree detail screen (#24):
+    - Condition and significance badges.
+    - Measurements, plus the address and coordinates with an "Open in Maps" button.
+    - Recorded and last-updated date and time.
+  - The catalogue, My Trees and tree pages reload when you return to them, so edits and deletes show straight away.
+
+*REQ-03 Filter by height, girth and region*
+- **API:**
+  - Filtering is now done by a declarative django-filter `TreeFilter` (#30), applied to both `/api/trees/` and `/api/trees/mine/`.
+  - Unknown `region` or `condition` values return `400` instead of an empty list.
+  - `height_min`/`height_max` and `girth_min`/`girth_max` range filters (#31):
+    - Either end of a range can be left open.
+    - Negative values and min > max return `400`.
+    - Height and girth are indexed (migration `0005`).
+- **Client:** the catalogue has height and girth min/max inputs, active ranges shown as clearable chips, and the API's `400` messages shown under the inputs (#33).
+
+*REQ-04 Filter by significance*
+- **API:** `?significance_status=<status>` and `?significant_only=true` on both list endpoints (#37). Both combine with the other filters.
+- **Client:**
+  - A Significance filter row and a "Significant only" toggle on the catalogue.
+  - A significance badge on catalogue cards and the tree page, hidden for `none` (#40).
+
+*Quality*
+- **60 API tests, all passing**, covering:
+  - registration
+  - tree creation and validation
+  - My Trees scoping and pagination (#11)
+  - species
+  - tree and species permissions
+  - significance filtering (#38)
+  - address fields
+- Code style:
+  - API: `ruff` for linting and formatting.
+  - Client: ESLint and Prettier.
+  - Shared client components: `TreeForm`, `ChipGroup`, `FormField`, `RangeFilter`, `AddressSection`, badges and `NavBar`.
+- `setup.sh` installs, migrates, type-checks and starts both the API and the client. It creates `.env` files with local defaults.
+
+**Known issues**
+- **No region filter on My Trees.** #34 is closed, but `app/trees/mine.tsx` still only filters by condition; reopen it.
+- **No API tests for the height, girth and region filters (#32).** They were checked by hand against the API.
+- **No automated client tests yet.** The UI checks in Feature 2 and 3's acceptance criteria were done by hand.
+- **The web build doesn't run.** `npm run web` fails because `react-native-web` isn't installed. Use iOS, Android or Expo Go.
+- **Address lookup depends on Photon's free public server**, called straight from the app:
+  - It needs internet access.
+  - It throttles heavy use (`503`); suggestions then stop and the form says so.
+  - OpenStreetMap data can be thin in rural areas.
+  - All address fields stay editable, and manual entry always works.
+- **GPS fill needs a real phone, or an emulator set to an NZ location.** The Android emulator reports California by default, and the form rejects positions outside NZ.
+- **Map-pin location entry (#7) isn't built.** Coordinates are typed in, filled from an address, or filled from GPS.
+- **Tree photos (#44) are not started.**
+- **No seed data.** Species have to be created by a staff user in `/admin/` or through `/api/species/`.
+- **`GET /api/trees/` (the catalogue) isn't paginated.** This is deliberate for the demo-sized dataset; only My Trees is paginated.
+- **Three ESLint warnings** (`react-hooks/set-state-in-effect`) in the loading effects of the catalogue, My Trees and tree detail screens.
+
+**Run the API locally (from this tag)**
+```bash
+git checkout v0.2.0
+./setup.sh --setup-only           # or ./setup.sh to also start both servers; --check also runs the tests and linters
+```
+To set it up by hand instead:
+```bash
+cd rakau_backend
+python -m venv venv
+source venv/bin/activate          # fish: source venv/bin/activate.fish · Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env              # set DJANGO_SECRET_KEY, DJANGO_DEBUG=True, DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,10.0.2.2
+python manage.py migrate
+python manage.py createsuperuser  # staff user, needed to add species
+python manage.py runserver 0.0.0.0:8000
+python manage.py test             # 60 tests
+```
+
+**Run the client locally (from this tag)**
+```bash
+cd rakau_frontend
+npm install
+cp .env.example .env              # EXPO_PUBLIC_API_URL=http://127.0.0.1:8000/api
+npx expo start                    # i = iOS simulator, a = Android emulator
+```
+- On the Android emulator, run `adb reverse tcp:8000 tcp:8000` so that `127.0.0.1` reaches the API.
+- On a physical phone:
+  - Set `EXPO_PUBLIC_API_URL=http://<your-LAN-IP>:8000/api`.
+  - Add that IP to `DJANGO_ALLOWED_HOSTS`.
+  - Allow location access when asked to use GPS fill.
+
+**Technical notes**
+- New dependencies:
+  - API: `django-filter` 26.2.
+  - Client: `expo-location` ~57.0.21, installed with `npx expo install`. The `app.json` plugin requests foreground location only.
+- Migrations added:
+  - `trees/0004_alter_tree_trunk_girth_cm`
+  - `0005_tree_height_girth_indexes`
+  - `0006_tree_significance_status`
+  - `0007_tree_street_address`
+
+  `makemigrations --check` reports no pending changes.
+- **Env vars are now read from `rakau_backend/.env`** using django-environ:
+  - `DJANGO_SECRET_KEY` (required)
+  - `DJANGO_DEBUG`
+  - `DJANGO_ALLOWED_HOSTS`
+  - `DJANGO_CORS_ALLOWED_ORIGINS`
+
+  CORS is enabled. The client still uses `EXPO_PUBLIC_API_URL`.
+- External service: Photon (`https://photon.komoot.io`) for address search and reverse lookup. It needs no key, and searches are sent 300 ms after typing stops, with at least 3 characters, to stay within fair use.
+- Breaking changes since v0.1.0:
+  - Log in with `POST /api/auth/login/`; the old `/api/token/` path is gone.
+  - Invalid filter values now return `400` instead of an empty list.
+  - Tree writes are limited to the owner or staff.
+  - Species writes are staff-only, but species reads no longer need a login.
+  - The client's tree detail route moved from `app/trees/[id].tsx` to `app/trees/[id]/index.tsx`. The URL `/trees/{id}` is unchanged.
 
 ---
 
