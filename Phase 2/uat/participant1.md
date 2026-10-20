@@ -27,7 +27,7 @@ Outcome: Passed
 
 Notes: 
 
-Successfully created the Kowhai
+User successfully created the Kowhai
 
 
 ### T2: Find your own trees (F2-AC2)
