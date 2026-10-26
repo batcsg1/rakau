@@ -57,7 +57,12 @@ Tasks are read from a printed task card, in this order. Each card gives the info
 - **Environment:**
   - The facilitator's Android phone running Expo Go, connected to the API on the facilitator's laptop over the same Wi-Fi.
   - The build is commit `TODO: hash` (`v0.2.0` plus the `seed_uat` command), the same for every session. Record the hash before the first session.
-  - The database is reset with `seed_uat` before each session.
+  - **Build change for P3:** P1 and P2 used the SDK 57 build (commit `TODO`). Before P3's session the
+  store version of Expo Go on the session phone updated to SDK 58, which can't open an SDK 57
+  project, so the client was upgraded to Expo SDK 58 (React Native 0.88, React 19.3; #55) and P3
+  used that build (commit `TODO`). The upgrade changed no screens, flows or wording in Add a Tree
+  or My Trees. The regression checklist in #55 was run before the session to confirm this.
+
 - **Data recorded per task:**
   - outcome: completed unaided / completed with hint / failed
   - time on task, from finishing reading the card to success or giving up
