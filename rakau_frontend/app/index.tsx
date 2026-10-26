@@ -45,12 +45,14 @@ export default function HomeScreen() {
         contentContainerClassName="pb-12"
         showsVerticalScrollIndicator={false}
       >
-        {/* A View with an absolutely positioned Image: ImageBackground is deprecated in SDK 58 */}
+        {/* ImageBackground is deprecated in SDK 58, so the photo is an absolutely positioned
+            image filling the header, the same way as the map above. An explicit style is used
+            because React Native's Image sizes itself to the photo's 3:2 ratio and ignores h-full */}
         <View className="px-6 pb-10 pt-8">
-          <Image
+          <ExpoImage
             source={require("../assets/Kauri_Forest.jpg")}
-            resizeMode="cover"
-            className="absolute inset-0 h-full w-full"
+            contentFit="cover"
+            style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
           />
           {/* Darkens the busy forest photo so the white text stays readable */}
           <View className="absolute inset-0 bg-black/50" />
