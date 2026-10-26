@@ -11,143 +11,81 @@ Scenarios, success conditions and the questionnaire: `Phase 2/11-user-acceptance
 
 | | |
 |---|---|
-| Participant | P_ |
-| Date | |
-| Duration | |
-| Session type | Moderated, observed, in person |
-| Device | |
-| Build (commit) | |
-| Data reset (`seed_uat --reset`) before the session | Yes / No |
-| Account used | `uat_p_` |
-| Consent given (verbal) | Yes / No |
-
-**Why this participant represents an intended user:**
+| Participant | Anon |
+| Date |  |
+| Session type | Moderated, **observed**, in person |
+| Device |  |
 
 ## Tasks
 
-Outcome: **Unaided** / **Hint** / **Failed**. Time is from finishing reading the card to success or giving up.
+Outcome: **Passed** / **Partial** / **Failed**. Time is from finishing reading the card to success or giving up.
 
-### T1: Find your own trees (F2-AC2)
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
+### T1: Register as a new user Record the kōwhai at 149 Forfar Street (F1-AC1, F2-AC1)
 
-**What they did:**
+Outcome: 
 
-**What they said:**
+Notes: 
 
-**Where they struggled:**
+### T2: Find your own trees (F2-AC2)
 
-### T2: Record the kōwhai at 149 Forfar Street (F1-AC1, F2-AC1)
+Outcome:
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
-
-**What they did:**
-
-**What they said:**
-
-**Where they struggled:**
+Notes: 
 
 ### T3: Record the rimu with the latitude typo (F1-AC2)
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
+Outcome: 
 
-**What they did:**
-
-**What they said:**
-
-**Where they struggled:**
+Notes: 
 
 ### T4: Update the kōwhai to stressed (F1-AC4)
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
+Outcome: 
 
-**What they did:**
-
-**What they said:**
-
-**Where they struggled:**
+Notes:
 
 ### T5: Remove the rimu (F1-AC5)
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
+Outcome: 
 
-**What they did:**
-
-**What they said:**
-
-**Where they struggled:**
+Notes: 
 
 ### T6: Try to change someone else's tōtara (F1-AC6)
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
+Outcome: 
 
-**What they did:**
-
-**What they said:**
-
-**Where they struggled:**
+Notes: 
 
 ### T7: Find the collector's oldest tree (F2-AC3)
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
+Outcome: 
 
-**What they did:**
-
-**What they said:**
-
-**Where they struggled:**
+Notes: 
 
 ### T8: Record a tree while logged out (F1-AC3)
 
-| Outcome | Time | Hint given |
-|---|---|---|
-| | | |
+Outcome: 
 
-**What they did:**
+Notes: 
 
-**What they said:**
+## Feedback
 
-**Where they struggled:**
-
-## Questionnaire
-
-1 = strongly disagree, 5 = strongly agree. Raw questionnaire kept as `P_-survey.*`.
+1 = strongly disagree, 5 = strongly agree.
 
 | # | Statement | Rating |
 |---|---|---|
-| Q1 | The feature was easy to use. | |
-| Q2 | It was clear what to do at each step. | |
-| Q3 | I understood the feedback the app gave me. | |
-| Q4 | I was satisfied with the result. | |
-| Q5 | I would be comfortable using this without help. | |
+| Q1 | The features were easy to use. |  |
+| Q2 | It was clear what to do at each step. |  |
+| Q3 | I understood the feedback the app gave me. |  |
+| Q4 | I was satisfied with the result. |  |
+| Q5 | I would be comfortable using this without help. |  |
 
 **What was the most confusing part?** (word for word)
 
+
 **What would you change?** (word for word)
 
-## Facilitator notes
 
-<!-- Anything outside a single task: setup or network problems (e.g. Photon
-throttling), interruptions, patterns you noticed. -->
 
-## Possible issues for the issue log
 
-<!-- Raw candidates only; they're assessed and prioritised in #52 (Part 3 of file 11). -->
-
-| Task | What happened | Seen by |
-|---|---|---|
-| | | P_ |

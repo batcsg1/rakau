@@ -1,4 +1,4 @@
-# UAT session: P_
+# UAT session: P_3
 
 <!--
 Copy this file to `P<n>.md` (e.g. `P1.md`) for each participant and fill it in
