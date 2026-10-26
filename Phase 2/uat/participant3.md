@@ -16,7 +16,7 @@ Scenarios, success conditions and the questionnaire: `Phase 2/11-user-acceptance
 | Session type | Moderated, **observed**, in person |
 | Device | Emulated Pixel 8 |
 | Device | Android phone, Expo Go (SDK 58, store version) |
-| Build (commit) | `TODO hash` (Expo SDK 58, #55) |
+| Build (commit) | (Expo SDK 58, #55) |
 
  > This session used the SDK 58 build; P1 and P2 used SDK 57. See Method → Environment in file 11.
 
