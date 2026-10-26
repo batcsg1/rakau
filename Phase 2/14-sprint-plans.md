@@ -160,5 +160,9 @@ known risks/dependencies going in.
 - **GPS isn't part of any scenario,** because participants won't be standing at the tree. Task cards give an address or coordinates instead.
 - **Dependency order:** test plan, then seed data, then pilot, then sessions, then analysis and issue log, then fixes and re-checking, then the summary, then `v0.3.0`. Recruiting runs alongside the test plan.
 - **Roadmap fit:** Sprint 4 (26 Oct – 8 Nov) is for further UAT changes and hardening. Only the 2 required changes need to land in this sprint; other issues from the log can be scheduled into Sprint 4.
+- **Outcome: build changed before the final session.** The plan was for every session to use the
+    same build, but Expo Go on the session phone updated to SDK 58 before P3's session. The client
+    was upgraded to SDK 58 (#55, brought forward from Sprint 4), and P3 tested that build. Features
+    and wording were unchanged, and this is noted in file 11's Method.
 
 ---
