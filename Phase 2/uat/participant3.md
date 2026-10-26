@@ -14,7 +14,7 @@ Scenarios, success conditions and the questionnaire: `Phase 2/11-user-acceptance
 | Participant | Anon |
 | Date | 26/10/2026 |
 | Session type | Moderated, **observed**, in person |
-| Device | Emulated Pixel 8 |
+| Device | Motorola  |
 | Device | Android phone, Expo Go (SDK 58, store version) |
 | Build (commit) | (Expo SDK 58, #55) |
 
@@ -100,6 +100,7 @@ The longitude and latitude fields, and the girth and crown spread fields, and un
 **What would you change?** (word for word)
 
 Add more field definitions to latitude, longitude, crown spread and girth. Have a feature/guidelines that highlights the average size for each trees within each region. 
+Make the UI less clutered/less busy in areas such as the main page. Have a Purpose section that contains the text below the motto for Rakau.
 
 
 
