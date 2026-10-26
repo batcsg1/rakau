@@ -125,7 +125,9 @@ known risks/dependencies going in.
 
 ---
 
-## Sprint 3 (UAT sprint) — 19 Oct - 1 Nov (v0.3.0)
+## Sprint 3 (UAT sprint) — 19 Oct - 25 Oct (v0.3.0)
+
+> **Schedule change.** The UAT sprint was shortened from two weeks (19 Oct - 1 Nov) to **one week (Mon 19 Oct - Sun 25 Oct)**. Sprint 4 was lengthened to **two weeks (Mon 26 Oct - Sun 8 Nov)** to match. See `00-roadmap.md`.
 
 **Sprint goal.** Validate the two Phase 1 features, **Add a Tree** (REQ-01) and **My Trees List** (REQ-02), with at least three real users who weren't involved in development. Turn what they struggle with into at least two tracked, implemented changes, and re-check the affected acceptance criteria. Ship `v0.3.0` with the full UAT evidence. Development work is limited to what the sessions need (test data) and small carry-over fixes, so the build being tested stays stable.
 
@@ -134,21 +136,12 @@ known risks/dependencies going in.
 | Issue | Type | Notes |
 |---|---|---|
 | **#46 UAT: validate Add a Tree and My Trees with real users** | Parent | Covers steps 1–8 of the UAT brief in `Phase 2/11-user-acceptance-testing.md` |
-| ↳ #47 UAT: test plan | Sub-issue | Part 1 of file 11: scenarios T1–T8 mapped to F1-AC1–AC6 and F2-AC1–AC3, method, questionnaire. Done before any session |
-| ↳ #48 API: UAT seed data command | Sub-issue | `python manage.py seed_uat`: a species list, an empty account per participant (`uat_p1`…), `uat_collector` with 25 trees (for paging), and `uat_other` with a tree the participant doesn't own. Safe to re-run; test data only |
 | ↳ #49 UAT: recruit participants and book sessions | Sub-issue | At least 3 people not involved in development who match the backlog's intended users (home gardener, citizen scientist, conservation group member, arborist). Consent wording ready |
 | ↳ #50 UAT: pilot session | Sub-issue | Dry run of T1–T8 on the session device to check task cards, timing, network (Photon), and the phone reaching the API over the LAN. Not counted as a participant |
 | ↳ #51 UAT: run moderated sessions and record raw results | Sub-issue | Moderated, observed sessions. Per-participant notes and questionnaires in `Phase 2/uat/`. **Real sessions only; nothing invented** |
 | ↳ #52 UAT: analyse results and log issues | Sub-issue | Part 3 of file 11: each issue with severity, priority and decision, plus feedback deliberately not actioned |
 | ↳ #53 UAT: implement and re-verify fixes from the issue log | Sub-issue (one issue per fix, created from the issue log) | One GitHub issue per change, linked from Part 4; each re-checks the acceptance criterion it touches |
 | ↳ #54 UAT: findings summary and evidence in the v0.3.0 release | Sub-issue | Part 5 of file 11, evidence checklist complete, `v0.3.0` release notes point to the evidence |
-| **Carry-over** | | Done **after** the sessions, unless it fixes a problem that would block them, so every participant tests the same build |
-| ↳ #34 Client: region filter on My Trees | Sub-issue (reopen) | Closed in Sprint 2 but not built: `mine.tsx` only filters by condition |
-| ↳ #32 API tests: tree filters individually and combined | Sub-issue | Height, girth and region filters (REQ-03 AC1–AC3) |
-| ↳ Client: pull-to-refresh stale-cache fallback | Sub-issue (new) | REQ-02 reliability requirement, unscheduled since Sprint 1: show the last list with a "stale" marker when a refresh fails |
-| **Housekeeping** | | Close duplicates #25/#26 (done as #27/#28); close parents #1, #8, #15, #29 and #35 once their sub-issues are Done |
-| **Stretch** | | Only after the UAT work and carry-over are Done |
-| ↳ #44 Tree photos: upload images to a tree record | Sub-issue | Not started. Moves to Sprint 4 if not reached |
 
 **Definition of Done.**
 - Part 1 of file 11 is complete before the first session, and every scenario maps to a Phase 1 acceptance criterion.
@@ -166,6 +159,6 @@ known risks/dependencies going in.
 - **External service:** address suggestions use Photon's fair-use public server. If it throttles or the venue's Wi-Fi is down, tasks are still completable with typed coordinates. Observe and log it if it happens, but don't let it block a task.
 - **GPS isn't part of any scenario,** because participants won't be standing at the tree. Task cards give an address or coordinates instead.
 - **Dependency order:** test plan, then seed data, then pilot, then sessions, then analysis and issue log, then fixes and re-checking, then the summary, then `v0.3.0`. Recruiting runs alongside the test plan.
-- **Roadmap fit:** Sprint 4 (2–8 Nov) is for further UAT changes and hardening. Only the 2 required changes need to land in this sprint; other issues from the log can be scheduled into Sprint 4.
+- **Roadmap fit:** Sprint 4 (26 Oct – 8 Nov) is for further UAT changes and hardening. Only the 2 required changes need to land in this sprint; other issues from the log can be scheduled into Sprint 4.
 
 ---
