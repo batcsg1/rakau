@@ -43,10 +43,10 @@ On Windows, run it from Git Bash. The manual steps below do the same thing one a
 
 Prerequisites:
 
-- Node.js v20.19.2
+- Node.js 22.13 or newer (e.g. `nvm install 22`); Expo SDK 58's tooling doesn't run on Node 20
 - `npm` Node Package Manager
 - Expo tooling via `npx expo`
-- Expo Go on a physical device, or an Android/iOS emulator
+- Expo Go for **SDK 58** (the current App Store / Play Store version) on a physical device, or an Android/iOS emulator
 
 ```bash
 # Clone the project branch

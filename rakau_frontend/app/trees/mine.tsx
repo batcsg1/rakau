@@ -272,7 +272,7 @@ export default function MyTreesScreen() {
         <SkeletonRow key={i} />
       ))}
     </View>
-  ) : error ? null : (
+  ) : error ? undefined : (
     <View className="items-center px-6 pt-16">
       <View className="h-24 w-24 items-center justify-center border border-dashed border-bark/30">
         <View className="h-3 w-3 rounded-full bg-leaf/50" />
@@ -299,7 +299,7 @@ export default function MyTreesScreen() {
   );
 
   const footer =
-    trees.length === 0 ? null : (
+    trees.length === 0 ? undefined : (
       <View className="items-center py-6">
         {loadingMore ? (
           <ActivityIndicator color={colors.leaf} />

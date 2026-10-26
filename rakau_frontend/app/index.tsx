@@ -1,4 +1,4 @@
-import { Image, ImageBackground, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Image as ExpoImage } from "expo-image";
@@ -45,11 +45,15 @@ export default function HomeScreen() {
         contentContainerClassName="pb-12"
         showsVerticalScrollIndicator={false}
       >
-        <ImageBackground
-          source={require("../assets/Kauri_Forest.jpg")}
-          resizeMode="cover"
-          className="px-6 pb-10 pt-8"
-        >
+        {/* ImageBackground is deprecated in SDK 58, so the photo is an absolutely positioned
+            image filling the header, the same way as the map above. An explicit style is used
+            because React Native's Image sizes itself to the photo's 3:2 ratio and ignores h-full */}
+        <View className="px-6 pb-10 pt-8">
+          <ExpoImage
+            source={require("../assets/Kauri_Forest.jpg")}
+            contentFit="cover"
+            style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+          />
           {/* Darkens the busy forest photo so the white text stays readable */}
           <View className="absolute inset-0 bg-black/50" />
           <Image
@@ -64,7 +68,7 @@ export default function HomeScreen() {
             Rākau helps home gardeners, arborists, council members, conservation groups and tree
             enthusiasts build a living catalogue of New Zealand's native and exotic trees.
           </Text>
-        </ImageBackground>
+        </View>
 
         <View className="px-6 pt-6">
           <Text className="font-iosevka-semibold text-xl text-bark">What you can do</Text>
