@@ -14,7 +14,7 @@ Scenarios, success conditions and the questionnaire: `Phase 2/11-user-acceptance
 | Participant | Anon |
 | Date | 26/10/2026 |
 | Session type | Moderated, **observed**, in person |
-| Device | Motorola  |
+| Device | Motorola Edge 60 Fusion  |
 | Device | Android phone, Expo Go (SDK 58, store version) |
 | Build (commit) | (Expo SDK 58, #55) |
 
