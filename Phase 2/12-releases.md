@@ -16,8 +16,8 @@ development.
 |---|---|---|---|
 | v0.1.0 | Sprint 1 | 2026-10-12 | Species/Tree API with CRUD + filtering; Expo client with home screen and filterable tree catalogue |
 | v0.2.0 | Sprint 2 | 2026-10-20 | JWT auth; Add, edit and delete a tree; My Trees with infinite scroll; height/girth/region and significance filters; street address with autocomplete and GPS; 60 API tests |
-| v0.3.0 | Sprint 3 | TODO | TODO |
-| v0.4.0 | UAT Sprint | TODO | TODO (includes UAT evidence bundle) |
+| v0.3.0 | Sprint 3 (UAT) | 2026-10-27 | UAT with 3 participants: test plan, raw results, issue log (18 issues, fixes tracked as #56–#63) and reflection; client upgraded to Expo SDK 58 |
+| v0.4.0 | Sprint 4 | TODO | TODO (UAT fixes #56–#63 and re-verification) |
 
 ---
 
@@ -297,6 +297,115 @@ npx expo start                    # i = iOS simulator, a = Android emulator
   - Species writes are staff-only, but species reads no longer need a login.
   - The client's tree detail route moved from `app/trees/[id].tsx` to `app/trees/
   
+---
+
+### v0.3.0 — Sprint 3 (UAT) — 2026-10-27
+
+**Delivered**
+
+*User acceptance testing (#46)*
+- **Test plan** (`Phase 2/11-user-acceptance-testing.md`, Part 1): eight tasks (T1–T8), each mapped to a Phase 1 acceptance criterion of Feature 1 (Add a tree, REQ-01) or Feature 2 (My Trees, REQ-02). Changes made to the plan after the first session are recorded under the scenarios table.
+- **Three moderated, observed sessions** (#51): P1 and P2 on 21 Oct, P3 on 26 Oct. Raw notes for each participant are in `Phase 2/uat/participant1–3.md`.
+- **Raw results** (Part 2): the outcome of every task for every participant, questionnaire scores and word-for-word answers to the open questions.
+
+  | | Q1 easy to use | Q2 clear steps | Q3 understood feedback | Q4 satisfied | Q5 comfortable unaided |
+  |---|---|---|---|---|---|
+  | Mean (1–5) | 3.67 | 3.00 | 3.67 | 2.33 | 2.00 |
+
+  Every participant passed T3 (field errors for an invalid latitude), T6 (can't change someone else's tree) and T8 (can't add a tree while logged out). T7 (find the oldest tree) was Partial for all three.
+- **Issue log** (Part 3, #52): 18 issues, each with its source, severity, priority and decision. There is also a reason for every piece of feedback not acted on.
+  - **Fix**, each tracked as its own GitHub issue labelled `UAT`:
+    - #56: label the condition field on the tree detail page (I1)
+    - #57: region shows "No Region" after auto-fill (I2)
+    - #58: confirm before deleting a tree (I3)
+    - #59: show the creation date on the catalogue and allow sorting by it (I4, also covers I11)
+    - #60: hide "Add" on the catalogue when logged out (I5)
+    - #61: labels for Girth and Crown Spread (I6)
+    - #62: hide latitude/longitude and fill them in automatically (I7, also covers I9)
+    - #63: move the home screen text into a Purpose section (I8)
+  - **Defer to Sprint 4:** I10, I12, I13 and I14.
+  - **Won't fix:** I15, I16, I17 and I18.
+- **UAT reflection:** `Phase 3/16-uat-reflection.md`.
+
+*Client: Expo SDK 58 upgrade (#55)*
+- **Why:** before P3's session, the store version of Expo Go updated to SDK 58, which can't open SDK 57 projects. P3 tested the SDK 58 build. No screens, flows or wording in Add a Tree or My Trees changed, and this is recorded in the Method section of file 11.
+- **Package versions:**
+  - Expo packages ~57.x → ~58.x
+  - React Native 0.86.3 → 0.88.0
+  - React / React DOM 19.2.3 → 19.3.0
+  - Reanimated 4.5.1 → 4.7.1
+  - Worklets 0.10.1 → 0.13.0
+  - Screens ~4.26.0 → ~4.30.0
+  - Safe Area ~5.7.0 → ~5.10.1
+- **Code changes:**
+  - The home screen no longer uses the deprecated `ImageBackground`; it now uses a `View` with an absolutely positioned `Image` (`e96f54c`).
+  - My Trees returns `undefined` instead of `null` for an empty list header or footer, to satisfy the stricter React Native TypeScript types.
+
+*Planning*
+- The UAT sprint was shortened to one week (19–25 Oct) and Sprint 4 extended to two weeks. The sprint plan was cut down to the work that could actually be done (`Phase 2/14-sprint-plans.md`).
+
+**Known issues**
+- **The UAT fixes (#56–#63) are not implemented yet.** They're scheduled for Sprint 4 (`v0.4.0`). Until then, Part 4 of file 11 (changes and re-verification) is empty. The most serious are:
+  - **#57:** the region is lost when it's auto-filled, so the tree shows "No Region".
+  - **#58:** deleting a tree doesn't ask for confirmation, which acceptance criterion F1-AC5 requires.
+- **Other issues found in UAT:**
+  - **I10:** on a phone, the keyboard covers the measurement fields on the Add Tree form.
+  - **Deferred:** filter by creator (I12), map pin (I13) and health value definitions (I14).
+- **UAT evidence gaps:**
+  - Time on task wasn't recorded in the sessions.
+  - P1 and P2 used the SDK 57 build; P3 used SDK 58.
+  - The seeded test data (`seed_uat`) was dropped, so T2 didn't test the empty state (F2-AC2), and T6 and T7 used existing records.
+- **API tests:** `trees/tests.py` lost `TreeValidationTests` and two My Trees page-2 assertions in `971ae5b`, a docs commit. The suite now has 45 tests, down from 60. Restore them from `v0.2.0` before tagging.
+- **Still open from v0.2.0:**
+  - No region filter on My Trees (#34).
+  - No API tests for the height, girth and region filters (#32).
+  - No automated client tests.
+  - `npm run web` doesn't work.
+  - Address lookup depends on Photon's free public server.
+  - GPS fill needs a real phone or an emulator set to an NZ location.
+  - No tree photos (#44).
+  - No seed data.
+  - The catalogue isn't paginated.
+
+**Run the API locally (from this tag)**
+```bash
+git checkout v0.3.0
+./setup.sh --setup-only           # or ./setup.sh to also start both servers; --check also runs the tests and linters
+```
+To set it up by hand instead:
+```bash
+cd rakau_backend
+python -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env              # set DJANGO_SECRET_KEY, DJANGO_DEBUG=True, DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,10.0.2.2
+python manage.py migrate
+python manage.py createsuperuser  # staff user, needed to add species
+python manage.py runserver 0.0.0.0:8000
+python manage.py test
+```
+
+**Run the client locally (from this tag)**
+Needs **Node ≥ 22.13**.
+```bash
+cd rakau_frontend
+npm install                       # clean install recommended after the SDK upgrade: rm -rf node_modules first
+cp .env.example .env              # EXPO_PUBLIC_API_URL=http://127.0.0.1:8000/api
+npx expo start                    # i = iOS simulator, a = Android emulator
+```
+- On a physical phone:
+  - Use the **store version of Expo Go (SDK 58)**.
+  - Set `EXPO_PUBLIC_API_URL=http://<your-LAN-IP>:8000/api` and add that IP to `DJANGO_ALLOWED_HOSTS`.
+- On the Android emulator, run `adb reverse tcp:8000 tcp:8000`.
+
+**Technical notes**
+- **Client stack:** Expo SDK 58, React Native 0.88.0, React 19.3.0, Reanimated 4.7.1, Worklets 0.13.0. Node ≥ 22.13 is needed for tooling.
+- **No API changes:** no new migrations, endpoints or dependencies.
+- **No new env vars.**
+- **Breaking changes since v0.2.0:**
+  - The client no longer opens in Expo Go for SDK 57; use the SDK 58 store version.
+  - Node 20 is no longer supported for the client.
+
 ---
 
 ## Release notes template (copy per release)
