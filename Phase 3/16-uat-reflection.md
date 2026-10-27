@@ -35,6 +35,7 @@ Average ratings were Q4 (satisfied) 2.3 and Q5 (comfortable without help) 2.0. S
 - **I6:** add labels for Girth and Crown Spread (F1-AC1; P3). P3 was "confused about what Trunk girth vs crown spread meant" and named these fields as the most confusing part.
 - **I7:** hide the latitude and longitude fields and fill them in automatically from the location the user enters (F1-AC1, F1-AC2; P1, P3). P1 said "most people aren't gonna need to manually enter them and could just be auto filled every time". P3 named the latitude and longitude fields as the most confusing part.
 - **I8:** tidy up the home screen by moving the text under the motto and logo off the main photo and into a Purpose section below it (P2, P3). P3 asked to "make the UI less clutered/less busy in areas such as the main page" and to "have a Purpose section that contains the text below the motto for Rakau". P2 said "the UI looks a bit cluttered". This doesn't break an acceptance criterion, but it's a small change that two participants asked for on their own.
+- **I9 and I11** will be fixed as part of I7 and I4: hiding the coordinates means they can no longer be overwritten (P1), and the detail page will show the time a tree was recorded, not just the date (P3).
 
 **Deferred or not fixed:**
 
