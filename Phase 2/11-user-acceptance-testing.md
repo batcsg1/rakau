@@ -42,13 +42,15 @@ Tasks are read from a printed task card, in this order. Each card gives the info
 
 | ID | Scenario / task given to participant | Feature | Maps to AC | Success = |
 |---|---|---|---|---|
-| T1 | "You've just joined Rakau and found a healthy **kōwhai** at **149 Forfar Street, Dunedin**. Record it." | 1 | F1-AC1, F2-AC1 | Tree saved with kōwhai, healthy and a location; it appears at the **top** of My Trees, and only the participant's own trees are shown |
-| T2 | "Find the list of trees *you* have recorded." | 2 | F2-AC1 | Reaches My Trees, sees the empty-state message, and identifies the "Add your first tree" button as the next step |
+| T1 | "You've just joined Rakau. Register as a new user, then record the healthy **kōwhai** you found at **149 Forfar Street, Dunedin**." | 1 | F1-AC1, F2-AC1 | Account created; tree saved with kōwhai, healthy and a location; it appears at the **top** of My Trees, and only the participant's own trees are shown |
+| T2 | "Find the list of trees *you* have recorded." | 2 | F2-AC1 | Reaches My Trees and sees only their own trees |
 | T3 | "Record a **stressed rimu**. Your notes say latitude **-458.87**, longitude **170.5**." (deliberate typo) | 1 | F1-AC2 | Participant notices the latitude error message, corrects it to -45.887 and saves; afterwards My Trees has exactly one new rimu, not two |
-| T4 | "On a second look, the kōwhai from T2 is **stressed**, not healthy. Update it." | 1 | F1-AC4 | Opens the kōwhai, edits and saves; the tree page shows Stressed |
+| T4 | "On a second look, the kōwhai from T1 is **stressed**, not healthy. Update it." | 1 | F1-AC4 | Opens the kōwhai, edits and saves; the tree page shows Stressed |
 | T5 | "The rimu from T3 was recorded by mistake. Remove it." | 1, 2 | F1-AC5 | Deletes it after confirming; it's gone from My Trees |
-| T6 | "In the catalogue, open the **tōtara** recorded by someone else (`uat_other`). Could you change that record?" | 1 | F1-AC6 | No Edit or Delete controls are shown, and the participant concludes they can't change it |
-| T7 | (Facilitator logs in as `uat_collector`, which has 25 trees.) "This account belongs to a keen recorder. Find the **oldest** tree they've recorded." | 2 | F2-AC3 | Scrolls past the first 20; the next page loads by itself and the participant reaches tree 25 ("all 25 trees shown") |
+| T6 | "In the catalogue, open a tree recorded by someone else. Could you change that record?" | 1 | F1-AC6 | No Edit or Delete controls are shown, and the participant concludes they can't change it |
+| T7 | "Find the **oldest** tree recorded by the test user `batcsam5`." | 2 | F2-AC3 | Scrolls through the list; further pages load by themselves and the participant identifies the oldest tree |
+
+> **Changes after planning:** T1 was changed to include registering (`8d56c7f`), T1 and T2 were swapped (`225f07b`), and the `seed_uat` data was dropped (`2828aaa`). As a result, T2 no longer tests the empty state (F2-AC2), and T6 and T7 use existing records instead of the seeded `uat_other` and `uat_collector` accounts.
 | T8 | (Facilitator logs out.) "You're not logged in. Try to record a tree." | 1 | F1-AC3 | The app asks them to log in before any tree can be saved; after logging in, they're back on the Add Tree form |
 
 ### Method
@@ -64,8 +66,8 @@ Tasks are read from a printed task card, in this order. Each card gives the info
   or My Trees. The regression checklist in #55 was run before the session to confirm this.
 
 - **Data recorded per task:**
-  - outcome: completed unaided / completed with hint / failed
-  - time on task, from finishing reading the card to success or giving up
+  - outcome: Passed / Partial / Failed
+  - time on task, from finishing reading the card to success or giving up (planned, but not recorded in the sessions)
   - observations: where they tapped first, hesitations, wrong turns, error messages seen
   - verbatim quotes
 
@@ -114,24 +116,50 @@ Open questions:
 
 | Participant | Task | Outcome | Time | Observations / quotes |
 |---|---|---|---|---|
-| P1 | T1 | TODO | TODO | TODO |
-| P1 | T2 | TODO | TODO | TODO |
-| P2 | T1 | TODO | TODO | TODO |
-| … | … | … | … | … |
+| P1 | T1 | Passed | Not recorded | Registered and created the kōwhai |
+| P1 | T2 | Passed | Not recorded | Found their own trees |
+| P1 | T3 | Passed | Not recorded | Got clear error messages for the invalid latitude |
+| P1 | T4 | Partial | Not recorded | Condition field not labelled on the kōwhai's detail page |
+| P1 | T5 | Passed | Not recorded | Removed the rimu |
+| P1 | T6 | Passed | Not recorded | Couldn't modify the test user's tree |
+| P1 | T7 | Partial | Not recorded | Found the oldest tree; no way to sort by creation time or filter by creator |
+| P1 | T8 | Passed | Not recorded | Couldn't record while logged out; the "Add" button still showed on the catalogue, which was misleading |
+| P2 | T1 | Passed | Not recorded | Registered and created the kōwhai |
+| P2 | T2 | Passed | Not recorded | Found their own trees |
+| P2 | T3 | Passed | Not recorded | Got clear error messages for the invalid latitude |
+| P2 | T4 | Partial | Not recorded | Condition field not labelled on the detail page |
+| P2 | T5 | Passed | Not recorded | Removed the rimu |
+| P2 | T6 | Passed | Not recorded | Couldn't modify the test user's tree |
+| P2 | T7 | Partial | Not recorded | Unclear which tree was oldest; had to open the detail page to see when each was recorded; suggested sorting by height, girth, crown spread and time created |
+| P2 | T8 | Passed | Not recorded | No notes recorded |
+| P3 | T1 | Partial | Not recorded | Confused by the coordinates; keyboard hid the measurement fields; confused by "trunk girth" vs "crown spread"; region showed "No Region" despite auto-filling to Otago; asked for imperial units and definitions of the health values |
+| P3 | T2 | Partial | Not recorded | Logged another tree at a different address; the region again showed "No Region" |
+| P3 | T3 | Passed | Not recorded | Invalid coordinates were rejected |
+| P3 | T4 | Passed | Not recorded | Condition updated to Stressed |
+| P3 | T5 | Passed | Not recorded | Suggested asking "Are you sure you want to delete this tree?" |
+| P3 | T6 | Passed | Not recorded | Could view another user's Monkey Puzzle Tree but not modify it |
+| P3 | T7 | Partial | Not recorded | Recorded times weren't exact; order not clear from the catalogue |
+| P3 | T8 | Passed | Not recorded | Redirected to the login page when trying to add a tree |
 
 ### Questionnaire results
 
 | Q | P1 | P2 | P3 | Mean |
 |---|---|---|---|---|
-| Q1 easy to use | | | | |
-| Q2 clear steps | | | | |
-| Q3 understood feedback | | | | |
-| Q4 satisfied | | | | |
-| Q5 comfortable unaided | | | | |
+| Q1 easy to use | 4 | 4 | 3 | 3.67 |
+| Q2 clear steps | 3 | 3 | 3 | 3.00 |
+| Q3 understood feedback | 4 | 3 | 4 | 3.67 |
+| Q4 satisfied | 2 | 3 | 2 | 2.33 |
+| Q5 comfortable unaided | 2 | 2 | 2 | 2.00 |
 
-Open-question responses: TODO (quote each participant)
+Open-question responses (word for word):
 
-Raw notes / recordings stored at: `docs/uat/` (session notes `P1.md`, `P2.md`, `P3.md`; questionnaires `P1-survey.*` …)
+| | Most confusing part | What would you change |
+|---|---|---|
+| P1 | "The location having the cords above, then auto filling to hamilton. Later being over ridden my location auto fill." | "Make sure it's easy to add cords, bit confusing, most people aren't gonna need to manually enter them and could just be auto filled every time? Maybe need a map where you can moved the pin, since the tree might not be at the exact address." |
+| P2 | "Not being able to tell straight away what trees were the oldest and the newest." | "Recommend adding sorting functionality for fields such as height, girth, crown spread and time created. Add search functionality for filtering trees based on creators. The UI looks a bit cluttered, and could do with more refactoring, especially paginating long tree lists so the user doesn't have to do one continous scroll." |
+| P3 | "The longitude and latitude fields, and the girth and crown spread fields, and understanding the definitions would have helped," | "Add more field definitions to latitude, longitude, crown spread and girth. Have a feature/guidelines that highlights the average size for each trees within each region. Make the UI less clutered/less busy in areas such as the main page. Have a Purpose section that contains the text below the motto for Rakau." |
+
+Raw notes stored at: `Phase 2/uat/` (`participant1.md`, `participant2.md`, `participant3.md`)
 
 ---
 
@@ -139,15 +167,37 @@ Raw notes / recordings stored at: `docs/uat/` (session notes `P1.md`, `P2.md`, `
 
 | ID | Description | Feature | Source (task / participant) | Severity | Priority | Decision |
 |---|---|---|---|---|---|---|
-| I1 | TODO | 1 | T1, P1+P2 | High / Med / Low | Must / Should / Won't | Fix / Defer / Won't fix |
-| I2 | TODO | 2 | T3, P3 | | | |
-| I3 | TODO | | | | | |
+| I1 | Condition field has no label on the tree detail page | 1 | T4, P1 + P2 | Med | Must | Fix (#56) |
+| I2 | Region shows "No Region" even though it auto-filled (Otago) | 1 | T1 + T2, P3 | High | Must | Fix (#57) |
+| I3 | No confirmation before deleting a tree, which F1-AC5 requires | 1 | T5, P3 | High | Must | Fix (#58) |
+| I4 | Creation date not shown on the catalogue, so participants couldn't tell the oldest or newest tree; no sorting by it | 2 | T7, P1 + P2 + P3 | Med | Must | Fix (#59) |
+| I5 | "Add" button still shown on the catalogue when logged out | 1 | T8, P1 | Low | Should | Fix (#60) |
+| I6 | Girth and Crown Spread fields unclear; need labels | 1 | T1, P3 | Med | Should | Fix (#61) |
+| I7 | Latitude and longitude fields confusing; should be hidden and filled in automatically from the location | 1 | T1, P3; questionnaire, P1 + P3 | Med | Should | Fix (#62) |
+| I8 | Home screen cluttered; move the text under the motto and logo off the photo into a Purpose section | – | Questionnaire, P2 + P3 | Low | Should | Fix (#63) |
+| I9 | Coordinates auto-filled to Hamilton, then overwritten by the device location | 1 | Questionnaire, P1 | Med | Should | Fix (resolved by I7, #62) |
+| I10 | Keyboard covers the measurement fields on the Add Tree form | 1 | T1, P3 | Med | Should | Defer |
+| I11 | Detail page shows the date recorded but not the time | 2 | T7, P3 | Low | Should | Fix (with I4, #59) |
+| I12 | No filter by creator | 2 | T7, P1; questionnaire, P2 | Low | Should | Defer |
+| I13 | No map pin to adjust the tree's location | 1 | Questionnaire, P1 | Low | Should | Defer |
+| I14 | No definitions for the health values | 1 | T1, P3 | Low | Should | Defer |
+| I15 | No sorting by height, girth or crown spread | 2 | T7, P2 | Low | Won't | Won't fix |
+| I16 | Long lists are one continuous scroll; asked for pagination | 2 | Questionnaire, P2 | Low | Won't | Won't fix |
+| I17 | No imperial units | 1 | T1, P3 | Low | Won't | Won't fix |
+| I18 | No guide to average tree size per region | 1 | Questionnaire, P3 | Low | Won't | Won't fix |
 
 ### Feedback deliberately not actioned
 
 | Feedback | Why not actioned |
 |---|---|
-| TODO | TODO |
+| I10 keyboard covering fields | Real usability problem, but it doesn't stop a tree being saved; scheduled for Sprint 4 |
+| I12 filter by creator | The catalogue isn't one of the two features under test; Sprint 4 |
+| I13 map pin | Needs a map library and a new interaction; larger than a UAT fix; Sprint 4 |
+| I14 health value definitions | Helpful but not a defect; Sprint 4, together with the I6 labels |
+| I15 sort by measurements | Not needed by any acceptance criterion; I4 already addresses the oldest/newest confusion |
+| I16 page-based pagination | F2-AC3 deliberately uses infinite scroll |
+| I17 imperial units | Outside REQ-01; the app stores metric values, and converting adds complexity for one request |
+| I18 regional size guide | A new feature outside REQ-01 and REQ-02 that needs reference data the app doesn't have |
 
 ---
 
@@ -171,14 +221,13 @@ what changed as a result, and what the re-verification confirmed.
 
 ## Evidence bundle for the UAT release
 
-- [ ] `docs/11-user-acceptance-testing.md` (this file, completed)
-- [ ] `docs/uat/` raw session notes for every participant
-- [ ] `docs/uat/` completed questionnaires for every participant
+- [x] `docs/11-user-acceptance-testing.md` (this file, completed)
+- [x] `docs/uat/` raw session notes for every participant
+- [x] `docs/uat/` completed questionnaires for every participant
 - [ ] Issue log with severity/priority per issue
 - [ ] ≥ 2 tracked changes linked to issues
 - [ ] Re-verification results for changed acceptance criteria
 - [ ] Findings summary
-- [ ] All of the above referenced in the UAT sprint release notes (file 12)
 
 ## Marker checklist (UAT criteria table from the brief)
 
