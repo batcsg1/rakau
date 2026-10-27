@@ -23,19 +23,19 @@ Average ratings were Q4 (satisfied) 2.3 and Q5 (comfortable without help) 2.0. S
 
 ## 3. Feedback acted on vs. not (~110 words)
 
-<!-- TODO: replace I-numbers with the IDs from file 11's issue log once #52 is done, and add the commit/PR for each fix. -->
+<!-- TODO: add the commit/PR for each fix once merged. Issue IDs match file 11, Part 3; GitHub issues are #56–#63. -->
 
 **To fix, because each one breaks an acceptance criterion:**
 
-- **I1:** label the condition field (F1-AC4; P1, P2).
-- **I2:** fix the "No Region" bug (F1-AC1; P3, seen twice).
-- **I3:** ask for confirmation before deleting. P3 asked for "Are you sure you want to delete this tree?", but F1-AC5 already requires a confirmation, so T5 should not have been marked a pass.
-- **I4:** show the creation date on the catalogue and allow sorting by it (F2-AC1; all three participants).
-- **I5:** hide "Add" when logged out (F1-AC3; P1 called it "misleading").
-- **I6:** add labels for Girth and Crown Spread (F1-AC1; P3). P3 was "confused about what Trunk girth vs crown spread meant" and named these fields as the most confusing part.
-- **I7:** hide the latitude and longitude fields and fill them in automatically from the location the user enters (F1-AC1, F1-AC2; P1, P3). P1 said "most people aren't gonna need to manually enter them and could just be auto filled every time". P3 named the latitude and longitude fields as the most confusing part.
-- **I8:** tidy up the home screen by moving the text under the motto and logo off the main photo and into a Purpose section below it (P2, P3). P3 asked to "make the UI less clutered/less busy in areas such as the main page" and to "have a Purpose section that contains the text below the motto for Rakau". P2 said "the UI looks a bit cluttered". This doesn't break an acceptance criterion, but it's a small change that two participants asked for on their own.
-- **I9 and I11** will be fixed as part of I7 and I4: hiding the coordinates means they can no longer be overwritten (P1), and the detail page will show the time a tree was recorded, not just the date (P3).
+- **I1 (#56):** label the condition field (F1-AC4; P1, P2).
+- **I2 (#57):** fix the "No Region" bug (F1-AC1; P3, seen twice).
+- **I3 (#58):** ask for confirmation before deleting. P3 asked for "Are you sure you want to delete this tree?", but F1-AC5 already requires a confirmation, so T5 should not have been marked a pass.
+- **I4 (#59):** show the creation date on the catalogue and allow sorting by it (F2-AC1; all three participants).
+- **I5 (#60):** hide "Add" when logged out (F1-AC3; P1 called it "misleading").
+- **I6 (#61):** add labels for Girth and Crown Spread (F1-AC1; P3). P3 was "confused about what Trunk girth vs crown spread meant" and named these fields as the most confusing part.
+- **I7 (#62):** hide the latitude and longitude fields and fill them in automatically from the location the user enters (F1-AC1, F1-AC2; P1, P3). P1 said "most people aren't gonna need to manually enter them and could just be auto filled every time". P3 named the latitude and longitude fields as the most confusing part.
+- **I8 (#63):** tidy up the home screen by moving the text under the motto and logo off the main photo and into a Purpose section below it (P2, P3). P3 asked to "make the UI less clutered/less busy in areas such as the main page" and to "have a Purpose section that contains the text below the motto for Rakau". P2 said "the UI looks a bit cluttered". This doesn't break an acceptance criterion, but it's a small change that two participants asked for on their own.
+- **I9 and I11** will be fixed as part of I7 (#62) and I4 (#59): hiding the coordinates means they can no longer be overwritten (P1), and the detail page will show the time a tree was recorded, not just the date (P3).
 
 **Deferred or not fixed:**
 
@@ -47,15 +47,16 @@ Average ratings were Q4 (satisfied) 2.3 and Q5 (comfortable without help) 2.0. S
 
 <!-- TODO: fill in once the fixes are merged and re-checked (file 11, Part 4). Only record results that were actually observed. -->
 
-| Change | Criterion re-verified | Result |
+| Change (issue) | Criterion re-verified | Result |
 |---|---|---|
-| I1 condition label | F1-AC4 | TODO |
-| I2 region saved and shown | F1-AC1 | TODO |
-| I3 delete confirmation | F1-AC5 | TODO |
-| I4 date shown and sortable | F2-AC1 | TODO |
-| I6 Girth and Crown Spread labels | F1-AC1 | TODO |
-| I7 coordinates hidden and filled automatically | F1-AC1, F1-AC2 | TODO |
-| I8 home screen text moved into a Purpose section | None (check with a participant) | TODO |
+| I1 condition label (#56) | F1-AC4 | TODO |
+| I2 region saved and shown (#57) | F1-AC1 | TODO |
+| I3 delete confirmation (#58) | F1-AC5 | TODO |
+| I4 date shown and sortable (#59) | F2-AC1 | TODO |
+| I5 "Add" hidden when logged out (#60) | F1-AC3 | TODO |
+| I6 Girth and Crown Spread labels (#61) | F1-AC1 | TODO |
+| I7 coordinates hidden and filled automatically (#62) | F1-AC1, F1-AC2 | TODO |
+| I8 home screen text moved into a Purpose section (#63) | None (check with a participant) | TODO |
 
 ## 5. What you would do differently next round (~40 words)
 
