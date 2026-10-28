@@ -13,7 +13,7 @@ import {
   CONDITION_OPTIONS,
   LATITUDE_RANGE,
   LONGITUDE_RANGE,
-  REGION_OPTIONS,
+  REGION_FORM_OPTIONS,
   SIGNIFICANCE_PICKER_OPTIONS,
   STATUS_OPTIONS,
 } from "../constants/options";
@@ -260,11 +260,11 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
           onRegionFound={setRegion}
         />
 
-        <ChipGroup
+        <ChipGroup<Region | "">
           label="Region"
-          options={REGION_OPTIONS}
-          selected={region}
-          onSelect={(value) => setRegion(value === region ? undefined : value)}
+          options={REGION_FORM_OPTIONS}
+          selected={region ?? ""}
+          onSelect={(value) => setRegion(value || undefined)}
           errors={fieldErrors.region}
         />
 

@@ -18,6 +18,13 @@ export const CONDITION_OPTIONS = toOptions<Condition>(CONDITION_LABELS);
 
 export const REGION_OPTIONS = toOptions<Region>(REGION_LABELS);
 
+// For forms where region is optional: "Not set" is how to clear it, because tapping the
+// selected region keeps it selected (a toggle silently cleared auto-filled regions, UAT I2)
+export const REGION_FORM_OPTIONS: Option<Region | "">[] = [
+  { value: "", label: "Not set" },
+  ...REGION_OPTIONS,
+];
+
 export const SIGNIFICANCE_OPTIONS = toOptions<Significance>(SIGNIFICANCE_LABELS);
 
 // For the Add Tree picker: most users won't know a tree's official status, so "Unsure"

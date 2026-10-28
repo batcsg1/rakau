@@ -309,6 +309,29 @@ class AddressFieldTests(APITestCase):
         for field, value in address.items():
             self.assertEqual(response.data[field], value)
 
+    def test_region_is_saved_and_shown_in_my_trees(self):
+        # UAT I2: an auto-filled region has to survive the save and appear in My Trees
+        response = self.client.post(
+            self.url,
+            self.payload(street_address="149 Forfar Street", region="otago"),
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["region"], "otago")
+        mine = self.client.get(f"{self.url}mine/").data["results"]
+        self.assertEqual(mine[0]["id"], response.data["id"])
+        self.assertEqual(mine[0]["region"], "otago")
+
+    def test_region_can_be_left_blank(self):
+        response = self.client.post(self.url, self.payload(region=""), format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["region"], "")
+
+    def test_unknown_region_returns_400(self):
+        response = self.client.post(self.url, self.payload(region="atlantis"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("region", response.data)
+
     def test_address_is_optional(self):
         response = self.client.post(self.url, self.payload(), format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -348,4 +371,3 @@ class AddressFieldTests(APITestCase):
         self.assertEqual(
             (tree.street_address, tree.city, tree.postcode), ("1 Queen Street", "Auckland", "1010")
         )
-
