@@ -206,7 +206,7 @@ Raw notes stored at: `Phase 2/uat/` (`participant1.md`, `participant2.md`, `part
 | Issue | Change made | Commit / PR | Acceptance criterion re-verified | Re-verification result |
 |---|---|---|---|---|
 | I1 (#56) | Added a "Condition" label next to the condition badge on the tree detail page, and a "Significance" label when that badge is shown (`app/trees/[id]/index.tsx`) | `71ba5af` | F1-AC4 | TODO: re-run T4 on the phone (edit the kōwhai to Stressed, save) and record whether the labelled condition shows Stressed |
-| I2 | TODO | `TODO` | F2-AC1 | Pass — TODO |
+| I2 (#57) | Region chips no longer toggle off when the selected region is tapped; a "Not set" chip clears the region instead (`components/TreeForm.tsx`, `constants/options.ts`). API tests check a created tree keeps its region and `/mine/` returns it | `464b372` | F1-AC1, F2-AC1 | TODO: re-run P3's path on the phone (auto-fill to Otago, tap Otago, save) and record whether My Trees shows Otago |
 
 <!-- Brief requires at least TWO issues to result in a tracked, implemented change. -->
 
