@@ -191,6 +191,7 @@ known risks/dependencies going in.
 | #32 API tests: height, girth and region filters | Test (carried over) | Each filter on its own and combined; `400` for invalid values; cleared filters return the full list (F3 AC1–AC3) |
 | #34 Client: region filter on My Trees | Bug (carried over) | Reopen. `mine.tsx` still only filters by condition |
 | #66 Fix ESLint `set-state-in-effect` warnings | Tech debt | The three loading effects in the catalogue, My Trees and tree detail screens |
+| #72 Make the home screen feature cards tappable | UX fix | The three "What you can do" cards look like buttons but do nothing. Add & Record Trees goes to `/trees/new`; Browse the Catalogue and Filter & Discover go to `/trees`. Same file as #63 (`app/index.tsx`), so do them together |
 | **Documentation and release** | | |
 | #53 / #54 UAT Parts 4–5 and evidence checklist | Docs (carried over) | Part 4 row per fix (change, commit, AC, result). Part 5 findings summary. Evidence now ships in `v1.0.0` instead of `v0.3.0` |
 | #67 File 10, design patterns and principles | Docs | Currently all TODO. Must match the patterns used in file 15 |
