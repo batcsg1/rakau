@@ -166,3 +166,56 @@ known risks/dependencies going in.
     and wording were unchanged, and this is noted in file 11's Method.
 
 ---
+
+## Sprint 4 (UAT hardening sprint) — 26 Oct - 8 Nov (v1.0.0)
+
+**Sprint goal.** Close the loop on UAT. Implement the eight fixes from the issue log (#56–#63) and re-check each affected acceptance criterion against the build the participants used. Then harden the build for submission: restore the lost API tests, fill the test gaps carried over since `v0.2.0`, and clear known lint warnings. This is the final sprint, so the deliverable is `v1.0.0`: a stable, documented build plus complete UAT evidence (Parts 4–5 of file 11). No new features are started unless every Must and Should item below is Done.
+
+**Sprint backlog.**
+
+| Issue | Type | Notes |
+|---|---|---|
+| **UAT fixes (Must)** | | From the Part 3 issue log in `Phase 2/11-user-acceptance-testing.md`. Each one re-checks its acceptance criterion and gets a row in Part 4 |
+| #57 Region shows "No Region" after auto-fill (I2) | Bug | High severity. The region chosen by the address auto-fill isn't saved. Check the value `AddressSection` passes to `TreeForm` against `Region` choices in `trees/models.py`. Add an API test that a created tree keeps its region. Re-check F1-AC1 and F2-AC1 |
+| #58 Confirm before deleting a tree (I3) | Bug | High severity. F1-AC5 requires a confirmation step. `Alert`/`confirm()` must work on Android and iOS. Re-check F1-AC5 |
+| #56 Label the condition on the tree detail page (I1) | UX fix | `app/trees/[id]/index.tsx`, next to `ConditionBadge`. Re-check F1-AC4 |
+| #59 Show creation date on the catalogue and sort by it (I4, I11) | Feature fix | API: `ordering` on `TreeViewSet` (`created_at` ascending/descending) and a test. Client: date and time on catalogue cards and a sort control. Re-check F2-AC1 |
+| **UAT fixes (Should)** | | |
+| #60 Hide "Add" on the catalogue when logged out (I5) | UX fix | Use `useCurrentUser`. Re-check F1-AC3 |
+| #61 Labels and help text for Girth and Crown Spread (I6) | UX fix | In `TreeForm`, with units. Do I14 (health definitions) in the same change, since it's the same help-text pattern |
+| #62 Hide latitude/longitude and fill them automatically (I7, I9) | UX fix | Coordinates come from the chosen address or GPS. Keep them visible under an "Advanced" toggle so T3-style manual entry and validation still work. Fixes the Hamilton overwrite (I9). Re-check F1-AC1 and F1-AC2 |
+| #63 Move the home screen text into a Purpose section (I8) | UX fix | `app/index.tsx` |
+| #64 Keyboard covers measurement fields (I10) | Bug (deferred from UAT) | `KeyboardAvoidingView` or scroll-to-input on the Add/Edit form. Test on the Motorola session phone |
+| **Hardening** | | |
+| #65 Restore lost API tests | Test | `971ae5b` dropped `TreeValidationTests` and two My Trees page-2 assertions (60 → 45 tests). Restore them from `v0.2.0`. Blocks the release |
+| #32 API tests: height, girth and region filters | Test (carried over) | Each filter on its own and combined; `400` for invalid values; cleared filters return the full list (F3 AC1–AC3) |
+| #34 Client: region filter on My Trees | Bug (carried over) | Reopen. `mine.tsx` still only filters by condition |
+| #66 Fix ESLint `set-state-in-effect` warnings | Tech debt | The three loading effects in the catalogue, My Trees and tree detail screens |
+| **Documentation and release** | | |
+| #53 / #54 UAT Parts 4–5 and evidence checklist | Docs (carried over) | Part 4 row per fix (change, commit, AC, result). Part 5 findings summary. Evidence now ships in `v1.0.0` instead of `v0.3.0` |
+| #67 File 10, design patterns and principles | Docs | Currently all TODO. Must match the patterns used in file 15 |
+| #68 Phase 3 reflections (files 15–17) into `reflection.md` | Docs | Assemble at the repo root |
+| #69 `v1.0.0` release notes and tag | Release | Per `Phase 2/12-releases.md` |
+| **Stretch (only once all of the above are Done)** | | |
+| #70 Filter by creator (I12) | Feature | `?owner=<username>` on `TreeFilter`, plus a catalogue input |
+| #71 Map pin for tree location (I13) | Feature | `react-native-maps`. Needs a new library and interaction, so it's the first item to drop |
+
+**Definition of Done.**
+- #56–#63 are merged, each linked from a Part 4 row in file 11 with its commit, the acceptance criterion re-checked, and the result. #57 and #58 have to be Done for `v1.0.0` to ship.
+- Re-checking is done on a real Android phone running the `v1.0.0` candidate, following the original task card for the affected T-scenario.
+- API tests are back to at least 60 and all pass, including the restored tests and the new #32, #57 and #59 tests.
+- `ruff`, ESLint (no warnings), Prettier and `tsc` are clean. `manage.py makemigrations --check` reports nothing pending.
+- `./setup.sh --check` passes from a clean clone of the tagged commit.
+- Part 5 of file 11 is written, and every box in the evidence checklist is ticked.
+- Tagged `v1.0.0` per `Phase 2/12-releases.md`, with release notes listing the UAT fixes, remaining known issues and local run instructions.
+
+**Risks / dependencies going in.**
+- **Final sprint, no carry-over.** Anything unfinished on 8 Nov goes in the `v1.0.0` known issues instead of a later sprint. Week 12 (9–13 Nov) is for reflections, the presentation and submission, not code.
+- **Priority order if time runs short:** #57 and #58 (High severity, F1-AC5 currently fails), then restoring the tests, then #56 and #59, then the Should fixes, then the remaining hardening, then stretch.
+- **#62 touches the validation path that T3 tests.** Hiding the coordinates must not remove F1-AC2's per-field errors. Re-run T3 after #62 lands.
+- **#57 and #62 both change `AddressSection` and `TreeForm`.** Do #57 first so the region bug is fixed and tested before the location UI is reworked.
+- **Photon dependency.** #62 relies on address lookup more heavily. If Photon throttles (`503`), the "Advanced" coordinate entry must still let a tree be saved.
+- **Re-checking without new participants.** Part 4 is re-checked by the developer against each acceptance criterion, not with a new UAT round. Say so in Part 5 rather than presenting it as user-validated.
+- **Version number.** `00-roadmap.md` names this release `v1.0.0`; the release log table in `Phase 2/12-releases.md` still says `v0.4.0`. Update the table to match.
+
+---
