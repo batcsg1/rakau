@@ -176,9 +176,19 @@ export default function TreeDetailScreen() {
                 {tree.species_scientific_name}
               </Text>
             </View>
+            {/* Labelled so the coloured pills read as fields, not decoration (UAT I1, #56) */}
             <View className="items-end gap-2">
-              <ConditionBadge condition={tree.condition} />
-              <SignificanceBadge significance={tree.significance_status} />
+              <View className="flex-row items-center gap-2">
+                <Text className="font-iosevka text-xs text-bark/60">Condition</Text>
+                <ConditionBadge condition={tree.condition} />
+              </View>
+              {/* The badge hides itself for "none", so the label goes with it */}
+              {tree.significance_status !== "none" && (
+                <View className="flex-row items-center gap-2">
+                  <Text className="font-iosevka text-xs text-bark/60">Significance</Text>
+                  <SignificanceBadge significance={tree.significance_status} />
+                </View>
+              )}
             </View>
           </View>
           <Text className="mt-3 font-iosevka text-sm text-bark/70">
