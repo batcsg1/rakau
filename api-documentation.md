@@ -71,8 +71,13 @@ pip install -r requirements.txt
 cp .env.example .env          # then fill in the values in the table below
 python manage.py makemigrations
 python manage.py migrate
+python -m seeding                  # adds the starter species catalogue; safe to re-run
 python manage.py createsuperuser   # optional — Django admin access
 ```
+
+`python -m seeding` adds native and common exotic NZ trees from `seeding/species.py`. Species are
+matched on scientific name, so re-running updates them instead of adding duplicates, and keeps
+each species' slug and active status.
 
 ## Environment variables
 

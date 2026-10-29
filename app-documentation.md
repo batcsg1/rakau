@@ -27,15 +27,45 @@ consumes is documented in `api-documentation.md`.
 ## Quick start
 
 `setup.sh` in the repository root sets up, builds and starts both the API and the client.
-It creates the virtual environment, installs dependencies, writes a local `.env` for each
-project if one doesn't exist, applies migrations, type-checks the client, then runs the API
-on port 8000 and the Expo dev server on port 8081. Ctrl+C stops both.
+It needs Python 3, Node.js and npm on your PATH (see the versions under Setup instructions).
 
 ```bash
 ./setup.sh               # set up and start everything
 ./setup.sh --setup-only  # set up and build without starting the servers
 ./setup.sh --check       # also run the API tests, Ruff, ESLint and Prettier first
+./setup.sh --help        # show these options
 ```
+
+`--check` and `--setup-only` can be combined (`./setup.sh --check --setup-only`) to run every
+check without starting anything.
+
+What it does, in order:
+
+| Step | What happens |
+|---|---|
+| Prerequisites | Checks Python 3, Node.js and npm are installed and prints their versions |
+| Backend dependencies | Creates `rakau_backend/venv` if it doesn't exist and installs `requirements.txt` |
+| Backend `.env` | Writes `rakau_backend/.env` with a generated secret key, debug on, and local hosts and CORS origins, if there isn't one |
+| Migrations | `python manage.py migrate` |
+| Species catalogue | `python -m seeding`: adds the native and exotic starter species (see `api-documentation.md`) |
+| System checks | `python manage.py check` |
+| Backend checks (`--check`) | Ruff lint and format check, then `python manage.py test` |
+| Frontend dependencies | `npm install` in `rakau_frontend` |
+| Frontend `.env` | Writes `rakau_frontend/.env` with `EXPO_PUBLIC_API_URL=http://127.0.0.1:8000/api`, if there isn't one |
+| Type check | `npm run typecheck` |
+| Frontend checks (`--check`) | `npm run lint` and `npm run format:check` |
+| Start | Runs the API on port 8000, waits up to 30 seconds for it to respond, then starts the Expo dev server on port 8081 |
+
+Once Expo is running, press `w` for web, `a` for Android or `i` for iOS, or scan the QR code
+with Expo Go. Ctrl+C stops both servers.
+
+It's safe to re-run: existing `.env` files and the virtual environment are reused, never
+overwritten, and the species seed updates existing species instead of duplicating them. If any
+step fails, the script stops and prints an error.
+
+On a physical phone, `127.0.0.1` points at the phone itself, so change `EXPO_PUBLIC_API_URL` in
+`rakau_frontend/.env` to `http://<your-LAN-IP>:8000/api`. The API listens on all interfaces
+(`0.0.0.0`), so the phone can reach it on the same network.
 
 On Windows, run it from Git Bash. The manual steps below do the same thing one at a time.
 
