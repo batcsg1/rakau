@@ -207,6 +207,7 @@ Raw notes stored at: `Phase 2/uat/` (`participant1.md`, `participant2.md`, `part
 |---|---|---|---|---|
 | I1 (#56) | Added a "Condition" label next to the condition badge on the tree detail page, and a "Significance" label when that badge is shown (`app/trees/[id]/index.tsx`) | `71ba5af` | F1-AC4 | TODO: re-run T4 on the phone (edit the kōwhai to Stressed, save) and record whether the labelled condition shows Stressed |
 | I2 (#57) | Region chips no longer toggle off when the selected region is tapped; a "Not set" chip clears the region instead (`components/TreeForm.tsx`, `constants/options.ts`). API tests check a created tree keeps its region and `/mine/` returns it | `464b372` | F1-AC1, F2-AC1 | TODO: re-run P3's path on the phone (auto-fill to Otago, tap Otago, save) and record whether My Trees shows Otago |
+| I3 (#58) | The delete confirmation on the tree detail page now asks "Are you sure you want to delete this {species}?", and its buttons read "No, keep it" and "Yes, delete" (`app/trees/[id]/index.tsx`). An inline confirmation was already in place before UAT; this makes it read as the question P3 suggested | `fe4a7d4` | F1-AC5 | TODO: re-run T5 on the phone (open the rimu, tap Delete, tap "No, keep it" and check it's still listed, then delete it and check it's gone from My Trees) |
 
 <!-- Brief requires at least TWO issues to result in a tracked, implemented change. -->
 
