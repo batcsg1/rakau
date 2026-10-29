@@ -52,7 +52,10 @@ cd s2-26-samuel-batchelor-id608001/rakau_backend
 ```bash
 python -m venv venv
 
-# On Powershell
+# On PowerShell
+.\venv\Scripts\Activate.ps1
+
+# On Git Bash (Windows)
 source venv/Scripts/activate
 
 # On Fish
@@ -75,9 +78,33 @@ python -m seeding                  # adds the starter species catalogue; safe to
 python manage.py createsuperuser   # optional — Django admin access
 ```
 
-`python -m seeding` adds native and common exotic NZ trees from `seeding/species.py`. Species are
-matched on scientific name, so re-running updates them instead of adding duplicates, and keeps
-each species' slug and active status.
+## Seeding the species catalogue
+
+`python -m seeding` adds native and common exotic NZ trees from `seeding/species.py`. Run it from
+`rakau_backend/` with the virtual environment active, after `python manage.py migrate`:
+
+```bash
+python -m seeding
+# Species seeded: 61 added, 4 updated
+```
+
+Species are matched on scientific name (ignoring case), so re-running updates them instead of
+adding duplicates, and a second run prints `0 added, 0 updated`. Each species' slug and active
+status are kept, so existing links keep working and species retired in the admin stay retired.
+`./setup.sh` runs it automatically.
+
+To add a species, append a `(common name, scientific name)` pair to `NATIVE_TREES` or
+`EXOTIC_TREES` in `seeding/species.py`, then run `python -m seeding` again:
+
+```python
+NATIVE_TREES = [
+    ...
+    ("Kōwhai", "Sophora microphylla"),
+]
+```
+
+On Windows, if the output errors on macrons (e.g. "kōwhai"), set `PYTHONIOENCODING=utf-8` first
+(`$env:PYTHONIOENCODING = "utf-8"` in PowerShell).
 
 ## Environment variables
 
@@ -96,7 +123,10 @@ placeholder values.
 - Activate the virtual environment
 
 ```bash
-# On Powershell
+# On PowerShell
+.\venv\Scripts\Activate.ps1
+
+# On Git Bash (Windows)
 source venv/Scripts/activate
 
 # On Fish
@@ -130,7 +160,10 @@ ruff format .
 - Activate the virtual environment
 
 ```bash
-# On Powershell
+# On PowerShell
+.\venv\Scripts\Activate.ps1
+
+# On Git Bash (Windows)
 source venv/Scripts/activate
 
 # On Fish
@@ -145,13 +178,19 @@ pip install -r requirements.txt
 - Run the tests
 
 ```bash
-python manage.py test             
+python manage.py test                     # every test
+python manage.py test trees               # one app
+python manage.py test seeding             # only the species seeding tests
+python manage.py test seeding.tests.SeedSpeciesTests.test_rerun_changes_nothing  # one test
 ```
+
+Tests run against a temporary test database, so `db.sqlite3` isn't touched.
 
 The suite covers, for each implemented endpoint:
 
 - successful requests — correct status code and response body
 - create/update validation failures — `400` with the consistent JSON error shape
 - authentication / authorisation failures — `401` / `403`
+- species seeding — every species is added with the right native flag, re-running changes nothing, and existing species are updated rather than duplicated
 
 TODO: coverage tool and how to produce a report, if used.
