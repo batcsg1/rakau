@@ -2,8 +2,8 @@
 # Sets up, builds and starts Rākau: the Django API (rakau_backend) and the Expo client (rakau_frontend).
 #
 # Usage:
-#   ./setup.sh               install, migrate, type-check, then start both servers
-#   ./setup.sh --setup-only  install, migrate and type-check without starting anything
+#   ./setup.sh               install, migrate, seed species, type-check, then start both servers
+#   ./setup.sh --setup-only  install, migrate, seed species and type-check without starting anything
 #   ./setup.sh --check       also run the API tests and both linters before starting
 #
 # Safe to re-run: existing .env files and the virtual environment are reused, never overwritten.
@@ -103,6 +103,10 @@ fi
 step "Backend: database migrations"
 
 "$VENV_PYTHON" manage.py migrate --no-input
+
+step "Backend: species catalogue"
+
+"$VENV_PYTHON" -m seeding
 
 step "Backend: system checks"
 
