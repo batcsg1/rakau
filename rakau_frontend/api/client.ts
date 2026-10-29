@@ -13,7 +13,8 @@ export async function request(
   const token = await getToken();
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    // A FormData upload sets its own multipart Content-Type, including the boundary
+    ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     Accept: "application/json",
     ...(options.headers as Record<string, string>),
   };

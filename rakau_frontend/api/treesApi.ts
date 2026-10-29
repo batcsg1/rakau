@@ -1,5 +1,5 @@
 import { request, toApiError } from "./client";
-import type { Paginated, Tree, TreeFilters, TreeInput } from "./types";
+import type { Paginated, Tree, TreeFilters, TreeInput, TreePhoto } from "./types";
 
 // Builds "?species_slug=kauri&region=otago" from the params that are set
 function toQuery(filters: object): string {
@@ -83,5 +83,39 @@ export async function deleteTree(id: number): Promise<void> {
 
   if (!response.ok) {
     throw await toApiError(response, "Could not delete tree");
+  }
+}
+
+// A picked or taken image, as expo-image-picker describes it
+export interface PhotoFile {
+  uri: string;
+  name: string;
+  type: string; // e.g. "image/jpeg"
+  file?: File; // web only: the browser's File, which FormData needs there
+}
+
+// Upload a photo to a tree (owner or staff). A rejected file throws an ApiError whose
+// fieldErrors.image says why, e.g. too large, the wrong type, or the tree already has 5
+export async function uploadTreePhoto(treeId: number, photo: PhotoFile): Promise<TreePhoto> {
+  const body = new FormData();
+  // React Native's FormData takes { uri, name, type } in place of a Blob
+  const native = { uri: photo.uri, name: photo.name, type: photo.type } as unknown as Blob;
+  body.append("image", photo.file ?? native);
+
+  const response = await request(`/trees/${treeId}/photos/`, { method: "POST", body });
+
+  if (!response.ok) {
+    throw await toApiError(response, "Could not upload the photo");
+  }
+
+  return response.json();
+}
+
+// Delete one of a tree's photos (owner or staff); the API removes the file too
+export async function deleteTreePhoto(treeId: number, photoId: number): Promise<void> {
+  const response = await request(`/trees/${treeId}/photos/${photoId}/`, { method: "DELETE" });
+
+  if (!response.ok) {
+    throw await toApiError(response, "Could not delete the photo");
   }
 }

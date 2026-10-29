@@ -29,6 +29,14 @@
         {
           "locationWhenInUsePermission": "Rākau uses your location to fill in where the tree you're recording is."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rākau uses your photos so you can add pictures of the trees you record.",
+          "cameraPermission": "Rākau uses your camera so you can photograph the trees you record.",
+          "microphonePermission": false
+        }
       ]
     ]
   }

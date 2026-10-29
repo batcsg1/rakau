@@ -18,6 +18,7 @@ import { deleteTree, getTree } from "../../../api/treesApi";
 import { REGION_LABELS, type Tree } from "../../../api/types";
 import { BackButton } from "../../../components/BackButton";
 import { NavBar } from "../../../components/NavBar";
+import { PhotoGallery } from "../../../components/PhotoGallery";
 import { ConditionBadge } from "../../../components/ConditionBadge";
 import { SignificanceBadge } from "../../../components/SignificanceBadge";
 import colors from "../../../constants/colors";
@@ -252,6 +253,15 @@ export default function TreeDetailScreen() {
             </View>
           )}
         </View>
+
+        <Section title="Photos">
+          <PhotoGallery
+            treeId={tree.id}
+            photos={tree.photos}
+            canModify={canModify}
+            onPhotosChange={(photos) => setTree((current) => current && { ...current, photos })}
+          />
+        </Section>
 
         <Section title="Measurements">
           <DetailRow label="Height" value={measurement(tree.height_m, "m")} />

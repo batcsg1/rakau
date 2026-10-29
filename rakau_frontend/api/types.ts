@@ -88,9 +88,21 @@ export interface Tree {
   height_m: string | null;
   trunk_girth_cm: string | null;
   crown_spread_m: string | null;
+  photos: TreePhoto[]; // oldest first
   created_at: string; // ISO 8601 string, not Date
   updated_at: string;
 }
+
+// A photo from GET /api/trees/{id}/photos/, also nested in each Tree
+export interface TreePhoto {
+  id: number;
+  url: string; // absolute, ready for <Image source={{ uri }}>
+  caption: string; // "" when not set
+  created_at: string;
+}
+
+// Mirrors trees.serializers.MAX_PHOTOS_PER_TREE
+export const MAX_PHOTOS_PER_TREE = 5;
 
 // Writable fields for POST /api/trees/ and PATCH /api/trees/{id}/
 export interface TreeInput {
