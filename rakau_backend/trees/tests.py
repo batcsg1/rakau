@@ -59,6 +59,93 @@ class CreateTreeTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
+# REQ-01 AC4 to AC6: only a tree's owner can change or remove it (#43)
+class UpdateDeleteTreeTests(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user("kauri_fan", email="kauri@example.com", password="x")
+        self.other = User.objects.create_user("rimu_fan", email="rimu@example.com", password="x")
+        species = Species.objects.create(common_name="Kauri", scientific_name="Agathis australis")
+        self.tree = Tree.objects.create(
+            owner=self.owner,
+            species=species,
+            latitude=-45.87,
+            longitude=170.5,
+            condition="healthy",
+        )
+        self.url = f"/api/trees/{self.tree.id}/"
+
+    def saved(self):
+        # Every stored column, so "unchanged" also catches a partial write or a bumped updated_at
+        return Tree.objects.values().get(pk=self.tree.pk)
+
+    def test_owner_patch_returns_200_with_changed_fields(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.patch(
+            self.url, {"condition": "stressed", "height_m": 12.5}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["condition"], "stressed")
+        self.assertEqual(response.data["height_m"], "12.50")
+        self.tree.refresh_from_db()
+        self.assertEqual(self.tree.condition, "stressed")
+
+    def test_invalid_patch_returns_400_and_leaves_tree_unchanged(self):
+        self.client.force_authenticate(self.owner)
+        before = self.saved()
+        for field, value in [
+            ("condition", "wilting"),
+            ("latitude", -458.87),  # the UAT T3 typo
+            ("longitude", 200),
+            ("height_m", -1),
+            ("species_slug", "not-a-species"),
+        ]:
+            with self.subTest(field=field):
+                response = self.client.patch(self.url, {field: value}, format="json")
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn(field, response.data)
+                self.assertEqual(self.saved(), before)
+
+    def test_owner_delete_returns_204_and_removes_tree(self):
+        self.client.force_authenticate(self.owner)
+        count = Tree.objects.count()
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Tree.objects.count(), count - 1)
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_other_user_patch_returns_403_and_leaves_tree_unchanged(self):
+        self.client.force_authenticate(self.other)
+        before = self.saved()
+        response = self.client.patch(self.url, {"condition": "dead"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.saved(), before)
+
+    def test_other_user_delete_returns_403_and_keeps_tree(self):
+        self.client.force_authenticate(self.other)
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Tree.objects.filter(pk=self.tree.pk).exists())
+
+    def test_unauthenticated_patch_returns_401_and_leaves_tree_unchanged(self):
+        before = self.saved()
+        response = self.client.patch(self.url, {"condition": "dead"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(self.saved(), before)
+
+    def test_unauthenticated_delete_returns_401_and_keeps_tree(self):
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(Tree.objects.filter(pk=self.tree.pk).exists())
+
+    def test_staff_can_update_and_delete_any_tree(self):
+        # IsOwnerOrReadOnly lets staff moderate; the client's canModify mirrors this
+        staff = User.objects.create_user("ranger", email="ranger@example.com", is_staff=True)
+        self.client.force_authenticate(staff)
+        response = self.client.patch(self.url, {"condition": "diseased"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.delete(self.url).status_code, status.HTTP_204_NO_CONTENT)
+
+
 class MyTreesTests(APITestCase):
     url = "/api/trees/mine/"
 
