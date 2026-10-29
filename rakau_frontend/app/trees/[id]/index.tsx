@@ -214,9 +214,12 @@ export default function TreeDetailScreen() {
           )}
 
           {/* Shown in-app rather than with Alert, which does nothing on web */}
+          {/* Asked as a question, naming the tree, so it reads as a confirmation (UAT I3, #58) */}
           {canModify && confirmingDelete && (
             <View className="mt-4 rounded-2xl border border-red-700/40 bg-white p-4">
-              <Text className="font-iosevka-semibold text-base text-bark">Delete this tree?</Text>
+              <Text className="font-iosevka-semibold text-base text-bark">
+                Are you sure you want to delete this {tree.species_name}?
+              </Text>
               <Text className="mt-1 font-iosevka text-sm text-bark/70">
                 This removes the record for everyone and can't be undone.
               </Text>
@@ -232,7 +235,7 @@ export default function TreeDetailScreen() {
                   disabled={deleting}
                   className="flex-1 items-center rounded-full border border-leaf px-6 py-3 active:opacity-70 disabled:opacity-50"
                 >
-                  <Text className="font-iosevka-semibold text-sm text-leaf">Cancel</Text>
+                  <Text className="font-iosevka-semibold text-sm text-leaf">No, keep it</Text>
                 </Pressable>
                 <Pressable
                   onPress={onDelete}
@@ -242,7 +245,7 @@ export default function TreeDetailScreen() {
                   {deleting ? (
                     <ActivityIndicator color={colors.white} />
                   ) : (
-                    <Text className="font-iosevka-semibold text-sm text-white">Delete</Text>
+                    <Text className="font-iosevka-semibold text-sm text-white">Yes, delete</Text>
                   )}
                 </Pressable>
               </View>
