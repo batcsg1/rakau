@@ -134,6 +134,35 @@ class MyTreesTests(APITestCase):
         response = self.client.get(self.url, {"condition": "stressed"})
         self.assertEqual(response.data["count"], 1)
 
+    def test_oldest_first(self):
+        first, second, third = self.make_trees(self.user, 3)
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url, {"ordering": "oldest"})
+        self.assertEqual(
+            [t["id"] for t in response.data["results"]], [first.id, second.id, third.id]
+        )
+
+    def test_oldest_first_paginates_without_gaps(self):
+        trees = self.make_trees(self.user, 25)
+        self.client.force_authenticate(self.user)
+        page1 = self.client.get(self.url, {"ordering": "oldest"}).data["results"]
+        page2 = self.client.get(self.url, {"ordering": "oldest", "page": 2}).data["results"]
+        self.assertEqual([t["id"] for t in page1 + page2], [t.id for t in trees])
+
+    def test_main_list_ordering(self):
+        mine = self.make_trees(self.user, 2)
+        theirs = self.make_trees(self.other, 1)
+        newest = [t["id"] for t in self.client.get("/api/trees/").data]
+        oldest = [t["id"] for t in self.client.get("/api/trees/", {"ordering": "oldest"}).data]
+        expected = [t.id for t in mine + theirs]
+        self.assertEqual(oldest, expected)
+        self.assertEqual(newest, expected[::-1])
+
+    def test_invalid_ordering_returns_400(self):
+        response = self.client.get("/api/trees/", {"ordering": "height"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ordering", response.data)
+
     def test_main_list_is_not_paginated(self):
         # The catalogue screen expects a plain array from /api/trees/
         self.make_trees(self.user, 1)

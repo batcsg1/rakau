@@ -5,6 +5,7 @@ import {
   type Condition,
   type Region,
   type Significance,
+  type TreeOrdering,
 } from "../api/types";
 
 // A selectable value and the text shown for it, e.g. in a ChipGroup or filter row
@@ -32,6 +33,12 @@ export const SIGNIFICANCE_OPTIONS = toOptions<Significance>(SIGNIFICANCE_LABELS)
 export const SIGNIFICANCE_PICKER_OPTIONS: Option<Significance>[] = [
   { value: "none", label: "Unsure" },
   ...SIGNIFICANCE_OPTIONS.filter((option) => option.value !== "none"),
+];
+
+// Sorting by when a tree was recorded (UAT I4, #59)
+export const ORDERING_OPTIONS: Option<TreeOrdering>[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
 ];
 
 export const STATUS_OPTIONS: Option<boolean>[] = [

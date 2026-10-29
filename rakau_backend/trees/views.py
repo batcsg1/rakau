@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
-from .filters import TreeFilter
+from .filters import ORDERINGS, TreeFilter
 from .models import Species, Tree
 from .pagination import MyTreesPagination
 from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
@@ -19,18 +19,18 @@ class TreeViewSet(viewsets.ModelViewSet):
     filterset_class = TreeFilter
 
     def get_queryset(self):
-        return Tree.objects.select_related("owner", "species")
+        # Newest first unless ?ordering= asks otherwise (TreeFilter.filter_ordering)
+        return Tree.objects.select_related("owner", "species").order_by(*ORDERINGS["newest"])
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
     # GET /api/trees/mine/?page=n — the caller's own trees, newest first, 20 per page.
     # Owner scoping happens in the queryset, so another user's trees can never be returned;
-    # the TreeFilter query params (condition, region, ...) still apply
+    # the TreeFilter query params (condition, region, ordering, ...) still apply
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def mine(self, request):
         queryset = self.filter_queryset(self.get_queryset()).filter(owner=request.user)
-        queryset = queryset.order_by("-created_at")
         paginator = MyTreesPagination()
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = self.get_serializer(page, many=True)

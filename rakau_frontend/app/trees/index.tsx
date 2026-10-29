@@ -7,15 +7,23 @@ import { router } from "expo-router";
 import { getSpecies } from "../../api/speciesApi";
 import { ApiError, type FieldErrors } from "../../api/client";
 import { getTrees } from "../../api/treesApi";
-import { REGION_LABELS, type Species, type Tree, type TreeFilters } from "../../api/types";
+import {
+  REGION_LABELS,
+  type Species,
+  type Tree,
+  type TreeFilters,
+  type TreeOrdering,
+} from "../../api/types";
 import { NavBar } from "../../components/NavBar";
 import { ConditionBadge } from "../../components/ConditionBadge";
 import { RangeFilter } from "../../components/RangeFilter";
 import { SignificanceBadge } from "../../components/SignificanceBadge";
 import colors from "../../constants/colors";
 import { useRefreshOnFocus } from "../../hooks/useRefreshOnFocus";
+import { shortDateTime } from "../../utils/dates";
 import {
   CONDITION_OPTIONS,
+  ORDERING_OPTIONS,
   REGION_OPTIONS,
   SIGNIFICANCE_OPTIONS,
   STATUS_OPTIONS,
@@ -23,18 +31,23 @@ import {
 } from "../../constants/options";
 
 // One labelled row of horizontally scrolling chips, with "All" to clear that filter
+// unless clearable is false (e.g. the sort, which always has a value)
 function FilterRow<T>({
   label,
   options,
   selected,
   onSelect,
+  clearable = true,
 }: {
   label: string;
   options: Option<T>[];
   selected: T | undefined;
   onSelect: (value: T | undefined) => void;
+  clearable?: boolean;
 }) {
-  const chips: Option<T | undefined>[] = [{ value: undefined, label: "All" }, ...options];
+  const chips: Option<T | undefined>[] = clearable
+    ? [{ value: undefined, label: "All" }, ...options]
+    : options;
 
   return (
     <View className="mt-4">
@@ -110,7 +123,7 @@ function TreeCard({ tree }: { tree: Tree }) {
       </View>
 
       <Text className="mt-2 font-iosevka text-xs text-bark/50">
-        Recorded {new Date(tree.created_at).toLocaleDateString("en-NZ")}
+        Recorded {shortDateTime(tree.created_at)}
         {tree.owner ? ` by ${tree.owner}` : ""}
       </Text>
     </Pressable>
@@ -119,6 +132,8 @@ function TreeCard({ tree }: { tree: Tree }) {
 
 export default function TreesScreen() {
   const [filters, setFilters] = useState<TreeFilters>({});
+  // Kept apart from filters so "Clear filters" leaves the sort alone
+  const [ordering, setOrdering] = useState<TreeOrdering>("newest");
   const [trees, setTrees] = useState<Tree[]>([]);
   const [species, setSpecies] = useState<Species[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -147,18 +162,18 @@ export default function TreesScreen() {
     setError(null);
     setFilterErrors({});
     try {
-      setTrees(await getTrees(filters));
+      setTrees(await getTrees({ ...filters, ordering }));
     } catch (e) {
       showLoadError(e);
     }
-  }, [filters]);
+  }, [filters, ordering]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
     setFilterErrors({});
-    getTrees(filters)
+    getTrees({ ...filters, ordering })
       .then((result) => {
         if (!cancelled) setTrees(result);
       })
@@ -172,7 +187,7 @@ export default function TreesScreen() {
     return () => {
       cancelled = true;
     };
-  }, [filters]);
+  }, [filters, ordering]);
 
   // Coming back from a tree's page picks up any edit or delete made there
   useRefreshOnFocus(loadTrees);
@@ -215,6 +230,13 @@ export default function TreesScreen() {
         </Text>
       </View>
 
+      <FilterRow
+        label="Sort by date recorded"
+        options={ORDERING_OPTIONS}
+        selected={ordering}
+        onSelect={(value) => value && setOrdering(value)}
+        clearable={false}
+      />
       {species && species.length > 0 && (
         <FilterRow
           label="Species"

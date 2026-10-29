@@ -24,7 +24,7 @@ export async function getTrees(filters: TreeFilters = {}): Promise<Tree[]> {
   return response.json();
 }
 
-// Get the signed-in user's Trees, newest first, 20 per page
+// Get the signed-in user's Trees, 20 per page, newest first unless filters.ordering says otherwise
 export async function getMyTrees(page = 1, filters: TreeFilters = {}): Promise<Paginated<Tree>> {
   const query = toQuery({ ...filters, page });
   const response = await request(`/trees/mine/${query}`);

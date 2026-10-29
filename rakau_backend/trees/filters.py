@@ -6,6 +6,10 @@ from .models import Condition, Region, Significance, Tree
 # (min, max) query-param pairs whose bounds must not be reversed
 RANGE_PAIRS = [("height_min", "height_max"), ("girth_min", "girth_max")]
 
+# ?ordering= values. id breaks ties between trees saved in the same instant, so pages stay stable
+ORDERINGS = {"newest": ["-created_at", "-id"], "oldest": ["created_at", "id"]}
+ORDERING_CHOICES = [("newest", "Newest first"), ("oldest", "Oldest first")]
+
 
 # Rejects a reversed range (e.g. height_min=10&height_max=5) with the same
 # {"field": ["message"]} shape as every other filter error
@@ -37,6 +41,9 @@ class TreeFilter(filters.FilterSet):
     girth_min = filters.NumberFilter(field_name="trunk_girth_cm", lookup_expr="gte", min_value=0)
     girth_max = filters.NumberFilter(field_name="trunk_girth_cm", lookup_expr="lte", min_value=0)
 
+    # ?ordering=oldest lists the first-recorded trees first; leaving it out keeps newest first
+    ordering = filters.ChoiceFilter(choices=ORDERING_CHOICES, method="filter_ordering")
+
     class Meta:
         model = Tree
         form = TreeFilterForm
@@ -51,9 +58,13 @@ class TreeFilter(filters.FilterSet):
             "height_max",
             "girth_min",
             "girth_max",
+            "ordering",
         ]
 
     def filter_significant_only(self, queryset, name, value):
         if value:
             return queryset.exclude(significance_status=Significance.NONE)
         return queryset
+
+    def filter_ordering(self, queryset, name, value):
+        return queryset.order_by(*ORDERINGS[value])

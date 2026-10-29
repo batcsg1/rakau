@@ -5,12 +5,19 @@ import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { deleteTree, getMyTrees } from "../../api/treesApi";
-import { CONDITION_LABELS, REGION_LABELS, type Condition, type Tree } from "../../api/types";
+import {
+  CONDITION_LABELS,
+  REGION_LABELS,
+  type Condition,
+  type Tree,
+  type TreeOrdering,
+} from "../../api/types";
 import { NavBar } from "../../components/NavBar";
 import colors from "../../constants/colors";
-import { CONDITION_OPTIONS, type Option } from "../../constants/options";
+import { CONDITION_OPTIONS, ORDERING_OPTIONS, type Option } from "../../constants/options";
 import { useRefreshOnFocus } from "../../hooks/useRefreshOnFocus";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
+import { shortDateTime } from "../../utils/dates";
 
 // Mirrors trees.pagination.MyTreesPagination.page_size
 const PAGE_SIZE = 20;
@@ -19,17 +26,6 @@ const FILTERS: Option<Condition | undefined>[] = [
   { value: undefined, label: "All" },
   ...CONDITION_OPTIONS,
 ];
-
-// "14 Mar" this year, "14 Mar 2025" otherwise
-function shortDate(iso: string): string {
-  const date = new Date(iso);
-  const sameYear = date.getFullYear() === new Date().getFullYear();
-  return date.toLocaleDateString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    ...(sameYear ? {} : { year: "numeric" }),
-  });
-}
 
 // e.g. "Otago · healthy", as in the wireframe
 function subtitle(tree: Tree): string {
@@ -66,7 +62,7 @@ function TreeRow({
         </Text>
       </View>
       <Text className="font-iosevka text-xs text-bark/50">
-        {highlighted ? "just now" : shortDate(tree.created_at)}
+        {highlighted ? "just now" : shortDateTime(tree.created_at)}
       </Text>
     </Pressable>
   );
@@ -90,6 +86,7 @@ export default function MyTreesScreen() {
 
   const checkingAuth = useRequireAuth("/trees/mine");
   const [condition, setCondition] = useState<Condition>();
+  const [ordering, setOrdering] = useState<TreeOrdering>("newest");
   const [trees, setTrees] = useState<Tree[]>([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -110,7 +107,7 @@ export default function MyTreesScreen() {
     const id = ++requestId.current;
     setError(null);
     try {
-      const data = await getMyTrees(1, { condition });
+      const data = await getMyTrees(1, { condition, ordering });
       if (id !== requestId.current) return;
       setTrees(data.results);
       setCount(data.count);
@@ -120,7 +117,7 @@ export default function MyTreesScreen() {
       if (id !== requestId.current) return;
       setError(e instanceof Error ? e.message : "Could not load your trees");
     }
-  }, [condition]);
+  }, [condition, ordering]);
 
   useEffect(() => {
     if (checkingAuth) return;
@@ -143,7 +140,7 @@ export default function MyTreesScreen() {
     const id = requestId.current;
     setLoadingMore(true);
     try {
-      const data = await getMyTrees(page + 1, { condition });
+      const data = await getMyTrees(page + 1, { condition, ordering });
       if (id !== requestId.current) return;
       // Skip any tree already shown, in case a new one shifted the pages
       setTrees((current) => {
@@ -229,6 +226,28 @@ export default function MyTreesScreen() {
             );
           })}
         </ScrollView>
+
+        <View className="mt-3 flex-row items-center gap-2">
+          <Text className="font-iosevka text-xs text-bark/60">Sort</Text>
+          {ORDERING_OPTIONS.map((option) => {
+            const active = option.value === ordering;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => setOrdering(option.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
+                className={`rounded-md border px-3 py-1.5 active:opacity-70 ${
+                  active ? "border-canopy bg-canopy" : "border-bark/30 bg-white"
+                }`}
+              >
+                <Text className={`font-iosevka text-sm ${active ? "text-white" : "text-bark"}`}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       {addedTree && (

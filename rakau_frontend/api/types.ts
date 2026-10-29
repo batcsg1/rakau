@@ -122,7 +122,11 @@ export interface TreeFilters {
   height_max?: number;
   girth_min?: number;
   girth_max?: number;
+  ordering?: TreeOrdering; // the API lists newest first when this is left out
 }
+
+// Mirrors trees.filters.ORDERINGS
+export type TreeOrdering = "newest" | "oldest";
 
 // DRF PageNumberPagination envelope
 export interface Paginated<T> {
