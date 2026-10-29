@@ -1,8 +1,18 @@
+import io
+import os
+import shutil
+import tempfile
+
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Significance, Species, Tree
+from .models import Significance, Species, Tree, TreePhoto
+from .serializers import MAX_PHOTO_BYTES, MAX_PHOTOS_PER_TREE
 
 
 class CreateTreeTests(APITestCase):
@@ -487,3 +497,185 @@ class AddressFieldTests(APITestCase):
         self.assertEqual(
             (tree.street_address, tree.city, tree.postcode), ("1 Queen Street", "Auckland", "1010")
         )
+
+
+def photo_upload(fmt="JPEG", name=None, size=(8, 8), noise=False):
+    # A real image made in memory; noise makes it incompressible, for the size limit
+    width, height = size
+    if noise:
+        image = Image.frombytes("RGB", size, os.urandom(width * height * 3))
+    else:
+        image = Image.new("RGB", size, "green")
+    buffer = io.BytesIO()
+    if fmt == "PNG":
+        image.save(buffer, format=fmt, compress_level=0)
+    else:
+        image.save(buffer, format=fmt)
+    extension = {"JPEG": "jpg"}.get(fmt, fmt.lower())
+    return SimpleUploadedFile(name or f"tree.{extension}", buffer.getvalue())
+
+
+# Uploads go to a throwaway folder rather than the real media/ (#44)
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp(prefix="rakau-test-media-"))
+class TreePhotoTests(APITestCase):
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self):
+        self.owner = User.objects.create_user("kauri_fan", email="kauri@example.com", password="x")
+        self.other = User.objects.create_user("rimu_fan", email="rimu@example.com", password="x")
+        species = Species.objects.create(common_name="Kauri", scientific_name="Agathis australis")
+        self.tree = Tree.objects.create(
+            owner=self.owner,
+            species=species,
+            latitude=-45.87,
+            longitude=170.5,
+            condition="healthy",
+        )
+        self.url = f"/api/trees/{self.tree.id}/photos/"
+
+    def upload(self, file=None, **fields):
+        return self.client.post(
+            self.url, {"image": file or photo_upload(), **fields}, format="multipart"
+        )
+
+    def add_photo(self):
+        return TreePhoto.objects.create(tree=self.tree, image=photo_upload())
+
+    def test_owner_upload_returns_201_and_shows_on_the_tree(self):
+        self.client.force_authenticate(self.owner)
+        response = self.upload(caption="New growth on the north side")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["caption"], "New growth on the north side")
+        self.assertTrue(response.data["url"].startswith("http://testserver/media/trees/"))
+        self.assertNotIn("image", response.data)
+
+        photo = TreePhoto.objects.get()
+        self.assertTrue(photo.image.storage.exists(photo.image.name))
+        detail = self.client.get(f"/api/trees/{self.tree.id}/").data
+        self.assertEqual([p["id"] for p in detail["photos"]], [photo.id])
+
+    def test_jpeg_png_and_webp_are_accepted(self):
+        self.client.force_authenticate(self.owner)
+        for fmt in ["JPEG", "PNG", "WEBP"]:
+            with self.subTest(fmt=fmt):
+                response = self.upload(photo_upload(fmt))
+                self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_caption_is_optional(self):
+        self.client.force_authenticate(self.owner)
+        response = self.upload()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["caption"], "")
+
+    def test_anyone_can_view_photos(self):
+        photo = self.add_photo()
+        for user in [None, self.other]:
+            with self.subTest(user=user):
+                self.client.force_authenticate(user)
+                response = self.client.get(self.url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                self.assertEqual([p["id"] for p in response.data], [photo.id])
+
+    def test_other_user_upload_returns_403_and_stores_nothing(self):
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.upload().status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(TreePhoto.objects.exists())
+
+    def test_unauthenticated_upload_returns_401_and_stores_nothing(self):
+        self.assertEqual(self.upload().status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(TreePhoto.objects.exists())
+
+    def test_staff_can_upload_to_any_tree(self):
+        staff = User.objects.create_user("ranger", email="ranger@example.com", is_staff=True)
+        self.client.force_authenticate(staff)
+        self.assertEqual(self.upload().status_code, status.HTTP_201_CREATED)
+
+    def test_wrong_file_type_returns_400(self):
+        self.client.force_authenticate(self.owner)
+        for label, file in [
+            ("gif", photo_upload("GIF")),  # a real image, just not an allowed format
+            ("text", SimpleUploadedFile("notes.txt", b"not an image")),
+            ("disguised", SimpleUploadedFile("tree.jpg", b"not an image either")),
+        ]:
+            with self.subTest(file=label):
+                response = self.upload(file)
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn("image", response.data)
+        self.assertFalse(TreePhoto.objects.exists())
+
+    def test_missing_image_returns_400(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.post(self.url, {"caption": "No file"}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("image", response.data)
+
+    def test_file_over_5_mb_returns_400(self):
+        self.client.force_authenticate(self.owner)
+        big = photo_upload("PNG", size=(1400, 1400), noise=True)
+        self.assertGreater(big.size, MAX_PHOTO_BYTES)
+        response = self.upload(big)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["image"], ["Photos must be 5 MB or smaller."])
+        self.assertFalse(TreePhoto.objects.exists())
+
+    def test_sixth_photo_returns_400(self):
+        for _ in range(MAX_PHOTOS_PER_TREE):
+            self.add_photo()
+        self.client.force_authenticate(self.owner)
+        response = self.upload()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["image"], ["A tree can have at most 5 photos."])
+        self.assertEqual(self.tree.photos.count(), MAX_PHOTOS_PER_TREE)
+
+    def test_caption_over_200_characters_returns_400(self):
+        self.client.force_authenticate(self.owner)
+        response = self.upload(caption="x" * 201)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("caption", response.data)
+
+    def test_owner_delete_returns_204_and_removes_the_file(self):
+        photo = self.add_photo()
+        name = photo.image.name
+        self.client.force_authenticate(self.owner)
+        response = self.client.delete(f"{self.url}{photo.id}/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(TreePhoto.objects.exists())
+        self.assertFalse(photo.image.storage.exists(name))
+
+    def test_other_user_delete_returns_403_and_keeps_the_photo(self):
+        photo = self.add_photo()
+        self.client.force_authenticate(self.other)
+        response = self.client.delete(f"{self.url}{photo.id}/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(photo.image.storage.exists(photo.image.name))
+
+    def test_unauthenticated_delete_returns_401_and_keeps_the_photo(self):
+        photo = self.add_photo()
+        response = self.client.delete(f"{self.url}{photo.id}/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(TreePhoto.objects.filter(pk=photo.pk).exists())
+
+    def test_deleting_another_trees_photo_through_this_tree_returns_404(self):
+        # Owning one tree mustn't let you delete photos on someone else's
+        others_tree = Tree.objects.create(
+            owner=self.other,
+            species=self.tree.species,
+            latitude=-36.85,
+            longitude=174.76,
+            condition="healthy",
+        )
+        photo = TreePhoto.objects.create(tree=others_tree, image=photo_upload())
+        self.client.force_authenticate(self.owner)
+        response = self.client.delete(f"{self.url}{photo.id}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(TreePhoto.objects.filter(pk=photo.pk).exists())
+
+    def test_deleting_a_tree_removes_its_photo_files(self):
+        photo = self.add_photo()
+        name = photo.image.name
+        self.client.force_authenticate(self.owner)
+        self.client.delete(f"/api/trees/{self.tree.id}/")
+        self.assertFalse(photo.image.storage.exists(name))

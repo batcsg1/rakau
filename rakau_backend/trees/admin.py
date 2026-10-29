@@ -1,9 +1,16 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from .models import Species, Tree
+from .models import Species, Tree, TreePhoto
 
 # Register your models here.
+
+
+# A tree's photos, editable on its admin page
+class TreePhotoInline(admin.TabularInline):
+    model = TreePhoto
+    extra = 0
+    readonly_fields = ["created_at"]
 
 
 @admin.register(Species)
@@ -30,6 +37,7 @@ class TreeAdmin(admin.ModelAdmin):
     autocomplete_fields = ["species", "owner"]
     readonly_fields = ["created_at", "updated_at"]
     date_hierarchy = "created_at"
+    inlines = [TreePhotoInline]
     fieldsets = [
         (None, {"fields": ["species", "owner", "condition", "is_present"]}),
         ("Location", {"fields": ["latitude", "longitude", "region"]}),

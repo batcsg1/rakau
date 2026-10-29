@@ -1,6 +1,11 @@
 from rest_framework import serializers
 
-from .models import Species, Tree
+from .models import Species, Tree, TreePhoto
+
+# Upload rules for tree photos (#44)
+PHOTO_FORMATS = {"JPEG", "PNG", "WEBP"}
+MAX_PHOTO_BYTES = 5 * 1024 * 1024
+MAX_PHOTOS_PER_TREE = 5
 
 
 class SpeciesSerializer(serializers.ModelSerializer):
@@ -17,8 +22,42 @@ class SpeciesDetailSerializer(serializers.ModelSerializer):
         fields = [*SpeciesSerializer.Meta.fields, "tree_count"]
 
 
+class TreePhotoSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TreePhoto
+        fields = ["id", "url", "caption", "created_at", "image"]
+        read_only_fields = ["id", "created_at"]
+        # Uploaded as "image"; read back as an absolute "url" the client can load directly
+        extra_kwargs = {"image": {"write_only": True}}
+
+    def get_url(self, photo):
+        request = self.context.get("request")
+        return request.build_absolute_uri(photo.image.url) if request else photo.image.url
+
+    def validate_image(self, image):
+        if image.size > MAX_PHOTO_BYTES:
+            raise serializers.ValidationError("Photos must be 5 MB or smaller.")
+        # DRF's ImageField has already opened the file with Pillow, so this is the real format
+        # rather than whatever the file name claims
+        if image.image.format not in PHOTO_FORMATS:
+            raise serializers.ValidationError("Upload a JPEG, PNG or WebP image.")
+        return image
+
+    def validate(self, attrs):
+        tree = self.context["tree"]
+        if tree.photos.count() >= MAX_PHOTOS_PER_TREE:
+            raise serializers.ValidationError(
+                {"image": [f"A tree can have at most {MAX_PHOTOS_PER_TREE} photos."]}
+            )
+        return attrs
+
+
 class TreeSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
+    # So the detail screen gets the gallery in the same request
+    photos = TreePhotoSerializer(many=True, read_only=True)
 
     species_name = serializers.ReadOnlyField(source="species.common_name")
     species_scientific_name = serializers.ReadOnlyField(source="species.scientific_name")
@@ -49,6 +88,7 @@ class TreeSerializer(serializers.ModelSerializer):
             "height_m",
             "trunk_girth_cm",
             "crown_spread_m",
+            "photos",
             "created_at",
             "updated_at",
         ]

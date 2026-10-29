@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.text import slugify
 
 # Coordinate bounds; the client's Add Tree form checks the same ranges
@@ -165,3 +167,23 @@ class Tree(models.Model):
 
     def __str__(self):
         return f"{self.species} ({self.latitude}, {self.longitude})"
+
+
+class TreePhoto(models.Model):
+    tree = models.ForeignKey(Tree, on_delete=models.CASCADE, related_name="photos")
+    image = models.ImageField(upload_to="trees/%Y/%m/")
+    caption = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self):
+        return f"Photo of {self.tree}"
+
+
+# Removes the file from storage when a photo goes, including when its tree is deleted
+# (a cascade deletes the rows without calling TreePhoto.delete())
+@receiver(post_delete, sender=TreePhoto)
+def delete_photo_file(sender, instance, **kwargs):
+    instance.image.delete(save=False)

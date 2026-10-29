@@ -1,14 +1,22 @@
 from django.db.models import Count
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .filters import ORDERINGS, TreeFilter
 from .models import Species, Tree
 from .pagination import MyTreesPagination
 from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
-from .serializers import SpeciesDetailSerializer, SpeciesSerializer, TreeSerializer
+from .serializers import (
+    SpeciesDetailSerializer,
+    SpeciesSerializer,
+    TreePhotoSerializer,
+    TreeSerializer,
+)
 
 
 class TreeViewSet(viewsets.ModelViewSet):
@@ -20,7 +28,11 @@ class TreeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Newest first unless ?ordering= asks otherwise (TreeFilter.filter_ordering)
-        return Tree.objects.select_related("owner", "species").order_by(*ORDERINGS["newest"])
+        return (
+            Tree.objects.select_related("owner", "species")
+            .prefetch_related("photos")
+            .order_by(*ORDERINGS["newest"])
+        )
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -35,6 +47,26 @@ class TreeViewSet(viewsets.ModelViewSet):
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = self.get_serializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    # GET /api/trees/{id}/photos/ — anyone; POST (multipart "image", optional "caption") — the
+    # owner or staff. get_object() runs IsOwnerOrReadOnly, so photos follow the tree's own rule
+    @action(detail=True, methods=["get", "post"], parser_classes=[MultiPartParser, FormParser])
+    def photos(self, request, pk=None):
+        tree = self.get_object()
+        context = {**self.get_serializer_context(), "tree": tree}
+        if request.method == "GET":
+            return Response(TreePhotoSerializer(tree.photos.all(), many=True, context=context).data)
+        serializer = TreePhotoSerializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(tree=tree)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # DELETE /api/trees/{id}/photos/{photo_id}/ — the owner or staff; the file is removed too
+    @action(detail=True, methods=["delete"], url_path=r"photos/(?P<photo_id>\d+)")
+    def delete_photo(self, request, pk=None, photo_id=None):
+        photo = get_object_or_404(self.get_object().photos, pk=photo_id)
+        photo.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SpeciesViewSet(viewsets.ModelViewSet):
