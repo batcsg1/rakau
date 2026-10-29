@@ -193,4 +193,17 @@ The suite covers, for each implemented endpoint:
 - authentication / authorisation failures — `401` / `403`
 - species seeding — every species is added with the right native flag, re-running changes nothing, and existing species are updated rather than duplicated
 
-TODO: coverage tool and how to produce a report, if used.
+- Measure test coverage
+
+Coverage uses [coverage.py](https://coverage.readthedocs.io/) (in `requirements.txt`), configured in
+`rakau_backend/.coveragerc`. The report covers the app code only. It leaves out `venv/`, migrations,
+the test files, and entry points such as `manage.py`, `asgi.py`, `wsgi.py` and `seeding/__main__.py`.
+
+```bash
+coverage run manage.py test   # run the suite while recording coverage
+coverage report               # summary in the terminal, with the line numbers each file misses
+coverage html                 # browsable report; open htmlcov/index.html
+```
+
+At the time of writing, the 53 tests cover 97% of the app code (363 statements, 11 missed). The
+`.coverage` data file and `htmlcov/` are git-ignored.
