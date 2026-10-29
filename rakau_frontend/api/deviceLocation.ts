@@ -14,7 +14,7 @@ export async function getCurrentPosition(): Promise<DevicePosition> {
   const { granted } = await Location.requestForegroundPermissionsAsync();
   if (!granted) {
     throw new DeviceLocationError(
-      "Location permission was denied. Allow it in your phone's settings, or type the coordinates in.",
+      "Location permission was denied. Allow it in your phone's settings, or type the tree's address in.",
     );
   }
   if (!(await Location.hasServicesEnabledAsync())) {
@@ -27,6 +27,8 @@ export async function getCurrentPosition(): Promise<DevicePosition> {
     });
     return { latitude: coords.latitude, longitude: coords.longitude, accuracyM: coords.accuracy };
   } catch {
-    throw new DeviceLocationError("Couldn't get your location. Try again outside, or type it in.");
+    throw new DeviceLocationError(
+      "Couldn't get your location. Try again outside, or type the tree's address in.",
+    );
   }
 }

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { ApiError, type FieldErrors } from "../api/errors";
-import type { AddressFields } from "../api/photonApi";
+import { formatAddress, geocodeAddress, type AddressFields } from "../api/photonApi";
 import { getSpecies } from "../api/speciesApi";
 import type { Condition, Region, Significance, Species, Tree, TreeInput } from "../api/types";
-import { AddressSection } from "./AddressSection";
+import { AddressSection, canLookUp, type TreeLocation } from "./AddressSection";
 import { ChipGroup } from "./ChipGroup";
 import { FormField } from "./FormField";
 import colors from "../constants/colors";
@@ -54,8 +54,10 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
   const [significance, setSignificance] = useState<Significance>(
     initial?.significance_status ?? "none",
   );
-  const [latitude, setLatitude] = useState(toText(initial?.latitude));
-  const [longitude, setLongitude] = useState(toText(initial?.longitude));
+  // No latitude/longitude fields: set from the address or the phone's location (UAT I7, #62)
+  const [location, setLocation] = useState<TreeLocation | null>(
+    initial ? { latitude: initial.latitude, longitude: initial.longitude, source: "saved" } : null,
+  );
   const [height, setHeight] = useState(toText(initial?.height_m));
   const [girth, setGirth] = useState(toText(initial?.trunk_girth_cm));
   const [crownSpread, setCrownSpread] = useState(toText(initial?.crown_spread_m));
@@ -91,40 +93,41 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
       .map((s) => ({ value: s.slug, label: s.common_name }));
   }, [species, speciesSearch, speciesSlug]);
 
-  // For "Fill from location": only once both coordinates are valid
-  const coordinates = useMemo(() => {
-    const lat = parseNumber(latitude);
-    const lng = parseNumber(longitude);
-    return isInRange(lat, LATITUDE_RANGE) && isInRange(lng, LONGITUDE_RANGE)
-      ? { latitude: lat, longitude: lng }
-      : null;
-  }, [latitude, longitude]);
-
-  // Catches what the API would reject, so the user gets instant feedback without a round trip
-  const validate = (): { input?: TreeInput; errors: FieldErrors } => {
+  // Catches what the API would reject, so the user gets instant feedback without a round trip.
+  // locationError is set when looking up a typed address failed
+  const validate = (
+    loc: TreeLocation | null,
+    addr: AddressFields,
+    regionValue: Region | undefined,
+    locationError?: string,
+  ): { input?: TreeInput; errors: FieldErrors } => {
     const errors: FieldErrors = {};
-    const lat = parseNumber(latitude);
-    const lng = parseNumber(longitude);
     const heightM = parseNumber(height);
     const girthCm = parseNumber(girth);
     const crownM = parseNumber(crownSpread);
 
     if (!speciesSlug) errors.species_slug = ["Choose a species."];
     if (!condition) errors.condition = ["Choose the tree's condition."];
-    if (!isInRange(lat, LATITUDE_RANGE)) {
-      errors.latitude = [
-        `Enter a latitude between ${LATITUDE_RANGE.min} and ${LATITUDE_RANGE.max}.`,
+    if (locationError) {
+      errors.location = [locationError];
+    } else if (!loc) {
+      errors.location = [
+        formatAddress(addr)
+          ? "Add the city or post code so the address can be found, or use your current location."
+          : "Add the tree's address, or use your current location.",
       ];
-    }
-    if (!isInRange(lng, LONGITUDE_RANGE)) {
-      errors.longitude = [
-        `Enter a longitude between ${LONGITUDE_RANGE.min} and ${LONGITUDE_RANGE.max}.`,
+    } else if (
+      !isInRange(loc.latitude, LATITUDE_RANGE) ||
+      !isInRange(loc.longitude, LONGITUDE_RANGE)
+    ) {
+      errors.location = [
+        "That location isn't valid. Pick the address again, or use your current location.",
       ];
     }
     if (Number.isNaN(heightM)) errors.height_m = ["Enter a number, e.g. 12.5"];
     if (Number.isNaN(girthCm)) errors.trunk_girth_cm = ["Enter a number, e.g. 240"];
     if (Number.isNaN(crownM)) errors.crown_spread_m = ["Enter a number, e.g. 8"];
-    const postcode = address.postcode.trim();
+    const postcode = addr.postcode.trim();
     if (postcode && !/^\d{4}$/.test(postcode)) {
       errors.postcode = ["Enter a 4-digit NZ post code."];
     }
@@ -136,12 +139,12 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
       input: {
         species_slug: speciesSlug!,
         condition: condition!,
-        latitude: lat as number,
-        longitude: lng as number,
-        region: region ?? "",
-        street_address: address.street_address.trim(),
-        suburb: address.suburb.trim(),
-        city: address.city.trim(),
+        latitude: loc!.latitude,
+        longitude: loc!.longitude,
+        region: regionValue ?? "",
+        street_address: addr.street_address.trim(),
+        suburb: addr.suburb.trim(),
+        city: addr.city.trim(),
         postcode,
         is_present: isPresent,
         significance_status: significance,
@@ -152,17 +155,57 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
     };
   };
 
+  // Places the tree at a typed address that hasn't been looked up yet, filling in any
+  // address parts and region the lookup found. Returns an error message when it can't
+  const lookUpTypedAddress = async (): Promise<
+    { location: TreeLocation; address: AddressFields; region: Region | undefined } | string
+  > => {
+    let match;
+    try {
+      match = await geocodeAddress(formatAddress(address));
+    } catch {
+      return "Couldn't look up the address right now. Use your current location, or try again.";
+    }
+    if (!match) return "Couldn't find that address. Check it, or use your current location.";
+    return {
+      location: { latitude: match.latitude, longitude: match.longitude, source: "address" },
+      address: {
+        street_address: address.street_address || match.street_address,
+        suburb: address.suburb || match.suburb,
+        city: address.city || match.city,
+        postcode: address.postcode || match.postcode,
+      },
+      region: region ?? match.region ?? undefined,
+    };
+  };
+
   const submit = async () => {
     setError(null);
-    const { input, errors } = validate();
-    setFieldErrors(errors);
-    if (!input) {
-      setError("Check the highlighted fields.");
-      return;
-    }
-
     setSubmitting(true);
     try {
+      let loc = location;
+      let addr = address;
+      let regionValue = region;
+      let locationError: string | undefined;
+      if (!loc && canLookUp(address)) {
+        const found = await lookUpTypedAddress();
+        if (typeof found === "string") {
+          locationError = found;
+        } else {
+          ({ location: loc, address: addr, region: regionValue } = found);
+          setLocation(loc);
+          setAddress(addr);
+          setRegion(regionValue);
+        }
+      }
+
+      const { input, errors } = validate(loc, addr, regionValue, locationError);
+      setFieldErrors(errors);
+      if (!input) {
+        setError("Check the highlighted fields.");
+        return;
+      }
+
       await onSubmit(input);
     } catch (e) {
       if (e instanceof ApiError) {
@@ -220,41 +263,23 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
           errors={fieldErrors.condition}
         />
 
-        <View>
-          <Text className="mb-2 font-iosevka-semibold text-base text-bark">Location</Text>
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <FormField
-                label="Latitude *"
-                placeholder="-45.8788"
-                value={latitude}
-                onChangeText={setLatitude}
-                keyboardType="numbers-and-punctuation"
-                errors={fieldErrors.latitude}
-              />
-            </View>
-            <View className="flex-1">
-              <FormField
-                label="Longitude *"
-                placeholder="170.5028"
-                value={longitude}
-                onChangeText={setLongitude}
-                keyboardType="numbers-and-punctuation"
-                errors={fieldErrors.longitude}
-              />
-            </View>
-          </View>
-        </View>
-
         <AddressSection
           value={address}
           onChange={setAddress}
-          coordinates={coordinates}
-          coordinatesEntered={latitude.trim() !== "" || longitude.trim() !== ""}
-          onCoordinatesFound={(lat, lng) => {
+          location={location}
+          onLocationChange={(loc) => {
             // ~10 cm precision is plenty; GPS isn't more accurate than that anyway
-            setLatitude(lat.toFixed(6));
-            setLongitude(lng.toFixed(6));
+            setLocation(
+              loc && {
+                ...loc,
+                latitude: Number(loc.latitude.toFixed(6)),
+                longitude: Number(loc.longitude.toFixed(6)),
+              },
+            );
+            // A new location answers any earlier "add the address" message
+            if (loc) {
+              setFieldErrors(({ location: _l, latitude: _a, longitude: _o, ...rest }) => rest);
+            }
           }}
           errors={fieldErrors}
           onRegionFound={setRegion}

@@ -21,36 +21,64 @@ import { FormField } from "./FormField";
 const SEARCH_DELAY_MS = 300;
 const MIN_SEARCH_LENGTH = 3;
 
-// Address points are the middle of a property or street, not the tree itself
-const COORDINATES_FROM_ADDRESS =
-  "Coordinates set from the address. Adjust them if the tree isn't right at the address.";
-
 const LOOKUP_UNAVAILABLE =
   "Address suggestions aren't available right now. You can still type the address in.";
+
+// The tree's coordinates, which the form no longer shows (UAT I7, #62), and where they came from:
+// - "gps": the phone's position, i.e. the tree itself, so editing the address doesn't move it
+// - "address": an address point (the middle of a property or street), redone if the address changes
+// - "saved": the position already saved on a tree being edited, kept like "gps"
+export type TreeLocation = {
+  latitude: number;
+  longitude: number;
+  source: "gps" | "address" | "saved";
+  accuracyM?: number | null;
+};
+
+// A typed address needs a city or post code before it's looked up, so a bare street name
+// can't match a street of the same name in another city (UAT I9)
+export function canLookUp(address: AddressFields): boolean {
+  return !!formatAddress(address) && !!(address.city.trim() || address.postcode.trim());
+}
+
+// What the status line says about the location, so the user can tell what will be saved
+function describe(location: TreeLocation | null, address: AddressFields): string {
+  if (!location) {
+    if (canLookUp(address)) return "The tree will be placed at this address when you save.";
+    if (formatAddress(address)) return "Add the city or post code so the address can be found.";
+    return "Pick an address from the suggestions, or use your current location at the tree.";
+  }
+  if (location.source === "gps") {
+    const accuracy = location.accuracyM ? ` (±${Math.round(location.accuracyM)} m)` : "";
+    return `Location set from where you're standing${accuracy}. Check you're at the tree.`;
+  }
+  if (location.source === "saved") return "Using the location saved with this tree.";
+  return (
+    "Location set from the address. That's the middle of the property or street, " +
+    "so use your current location if you're standing at the tree."
+  );
+}
 
 type AddressSectionProps = {
   value: AddressFields;
   onChange: (value: AddressFields) => void;
-  // The coordinates entered above, for "Fill from location"; null when not valid yet
-  coordinates: { latitude: number; longitude: number } | null;
-  // Whether anything has been typed into Latitude or Longitude, valid or not
-  coordinatesEntered: boolean;
-  // Called when the coordinates are filled from GPS or from a looked-up address
-  onCoordinatesFound: (latitude: number, longitude: number) => void;
+  location: TreeLocation | null;
+  onLocationChange: (location: TreeLocation | null) => void;
+  // "location" holds the form's own message; latitude/longitude are the API's, shown here
+  // because there are no coordinate fields any more
   errors: FieldErrors;
   // Called when a picked or looked-up address tells us which region the tree is in
   onRegionFound: (region: Region) => void;
 };
 
-// Optional street address with Photon suggestions while typing the street, and a
-// "Fill from location" button that fills in whichever of the address and coordinates is
-// missing (see fillFromLocation). Every field stays editable
+// The tree's location: a street address with Photon suggestions while typing, and a
+// "Use my current location" button. The coordinates are set in the background from whichever
+// the user gives, and the status line underneath says which one will be saved
 export function AddressSection({
   value,
   onChange,
-  coordinates,
-  coordinatesEntered,
-  onCoordinatesFound,
+  location,
+  onLocationChange,
   errors,
   onRegionFound,
 }: AddressSectionProps) {
@@ -58,7 +86,7 @@ export function AddressSection({
   const [searchText, setSearchText] = useState("");
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
-  const [filling, setFilling] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -83,8 +111,11 @@ export function AddressSection({
     };
   }, [searchText]);
 
-  const set = (field: keyof AddressFields) => (text: string) =>
+  // Typing changes the address, so a location taken from the old address no longer applies
+  const set = (field: keyof AddressFields) => (text: string) => {
     onChange({ ...value, [field]: text });
+    if (location?.source === "address") onLocationChange(null);
+  };
 
   const onStreetChange = (text: string) => {
     set("street_address")(text);
@@ -101,10 +132,13 @@ export function AddressSection({
     const { street_address, suburb, city, postcode, region } = suggestion;
     onChange({ street_address, suburb, city, postcode });
     if (region) onRegionFound(region);
-    // Only fill empty coordinates: ones already entered are the tree's own position
-    if (!coordinatesEntered) {
-      onCoordinatesFound(suggestion.latitude, suggestion.longitude);
-      setMessage(COORDINATES_FROM_ADDRESS);
+    // A GPS fix is the tree itself, so the picked address only labels it
+    if (location?.source !== "gps") {
+      onLocationChange({
+        latitude: suggestion.latitude,
+        longitude: suggestion.longitude,
+        source: "address",
+      });
     }
     setSearchText("");
     setSuggestions([]);
@@ -124,41 +158,11 @@ export function AddressSection({
     setSearchText("");
   };
 
-  // Works from whatever the user already has, in this order:
-  // 1. valid coordinates: look up the address there (they win, so a tree recorded from home
-  //    isn't moved to where the phone is)
-  // 2. a typed address: look up its coordinates
-  // 3. nothing yet: use the phone's GPS, then look up the address there
-  const fillFromLocation = async () => {
+  // The phone's GPS position becomes the tree's location, then the address there is looked up
+  const locateFromDevice = async () => {
     setMessage(null);
-    if (!coordinates && coordinatesEntered) {
-      setMessage("Fix the latitude and longitude, or clear both to fill them in automatically.");
-      return;
-    }
-
-    setFilling(true);
-    let note: string | null = null;
+    setLocating(true);
     try {
-      if (coordinates) {
-        const address = await reverseGeocode(coordinates.latitude, coordinates.longitude);
-        if (address) applyLookup(address);
-        else setMessage("No address found at these coordinates. You can type it in instead.");
-        return;
-      }
-
-      const typedAddress = formatAddress(value);
-      if (typedAddress) {
-        const match = await geocodeAddress(typedAddress);
-        if (!match) {
-          setMessage("Couldn't find that address. Check it, or type the coordinates in.");
-          return;
-        }
-        onCoordinatesFound(match.latitude, match.longitude);
-        applyLookup(match);
-        setMessage(COORDINATES_FROM_ADDRESS);
-        return;
-      }
-
       let position;
       try {
         position = await getCurrentPosition();
@@ -169,44 +173,89 @@ export function AddressSection({
       if (!isInNz(position.latitude, position.longitude)) {
         setMessage(
           "Your location is outside New Zealand (emulators often report California). " +
-            "Type the address or coordinates in instead.",
+            "Type the tree's address in instead.",
         );
         return;
       }
-      onCoordinatesFound(position.latitude, position.longitude);
-      const accuracy = position.accuracyM ? ` (±${Math.round(position.accuracyM)} m)` : "";
-      note = `Coordinates set from your current location${accuracy}. Check you're standing at the tree.`;
-
-      const address = await reverseGeocode(position.latitude, position.longitude);
-      if (address) {
-        applyLookup(address);
-        setMessage(note);
-      } else {
-        setMessage(`${note} No address found here, so you can type it in.`);
+      onLocationChange({
+        latitude: position.latitude,
+        longitude: position.longitude,
+        source: "gps",
+        accuracyM: position.accuracyM,
+      });
+      try {
+        const address = await reverseGeocode(position.latitude, position.longitude);
+        if (address) applyLookup(address);
+        else setMessage("No address found here, so you can type it in.");
+      } catch {
+        // The GPS location is already set; only the address lookup failed
+        setMessage(LOOKUP_UNAVAILABLE);
       }
-    } catch {
-      // Photon failed; any GPS coordinates already filled in are kept
-      setMessage([note, LOOKUP_UNAVAILABLE].filter(Boolean).join(" "));
     } finally {
-      setFilling(false);
+      setLocating(false);
     }
   };
+
+  // Swaps a GPS or saved location for the typed address's own position
+  const locateFromAddress = async () => {
+    setMessage(null);
+    setLocating(true);
+    try {
+      const match = await geocodeAddress(formatAddress(value));
+      if (!match) {
+        setMessage("Couldn't find that address. Check it, or use your current location.");
+        return;
+      }
+      onLocationChange({ latitude: match.latitude, longitude: match.longitude, source: "address" });
+      applyLookup(match);
+    } catch {
+      setMessage(LOOKUP_UNAVAILABLE);
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  const locationErrors = [
+    ...(errors.location ?? []),
+    ...(errors.latitude ?? []),
+    ...(errors.longitude ?? []),
+  ];
 
   return (
     <View>
       <View className="mb-2 flex-row items-center justify-between gap-3">
-        <Text className="font-iosevka-semibold text-base text-bark">Address (optional)</Text>
+        <Text className="font-iosevka-semibold text-base text-bark">Location *</Text>
         <Pressable
-          onPress={fillFromLocation}
-          disabled={filling}
+          onPress={locateFromDevice}
+          disabled={locating}
           className="rounded-full border border-leaf px-4 py-1.5 active:opacity-70 disabled:opacity-50"
         >
-          {filling ? (
+          {locating ? (
             <ActivityIndicator color={colors.leaf} />
           ) : (
-            <Text className="font-iosevka-semibold text-sm text-leaf">Fill from location</Text>
+            <Text className="font-iosevka-semibold text-sm text-leaf">Use my current location</Text>
           )}
         </Pressable>
+      </View>
+
+      <View
+        className={`mb-4 rounded-xl border px-4 py-3 ${
+          locationErrors.length ? "border-red-700 bg-red-100" : "border-leaf/30 bg-leaf/10"
+        }`}
+      >
+        <Text className="font-iosevka text-sm text-bark">{describe(location, value)}</Text>
+        {location && location.source !== "address" && canLookUp(value) && (
+          <Pressable onPress={locateFromAddress} disabled={locating} className="mt-2 self-start">
+            <Text className="font-iosevka-semibold text-sm text-leaf underline">
+              Use the address instead
+            </Text>
+          </Pressable>
+        )}
+        {locationErrors.map((error) => (
+          <Text key={error} className="mt-1 font-iosevka text-sm text-red-700">
+            {error}
+          </Text>
+        ))}
       </View>
 
       <View className="gap-4">
