@@ -64,13 +64,20 @@ export default function HomeScreen() {
           <Text className="mt-4 font-iosevka text-lg text-white/90">
             Record. Discover. Protect Aotearoa's trees.
           </Text>
-          <Text className="mt-4 font-iosevka text-base leading-6 text-white/80">
-            Rākau helps home gardeners, arborists, council members, conservation groups and tree
-            enthusiasts build a living catalogue of New Zealand's native and exotic trees.
-          </Text>
         </View>
 
+        {/* Moved off the photo so the header only carries the logo and motto (UAT I8, #63) */}
         <View className="px-6 pt-6">
+          <Text className="font-iosevka-semibold text-xl text-bark">Purpose</Text>
+          <View className="mt-4 rounded-2xl border border-leaf/20 bg-white p-4 shadow-sm">
+            <Text className="font-iosevka text-base leading-6 text-bark/80">
+              Rākau helps home gardeners, arborists, council members, conservation groups and tree
+              enthusiasts build a living catalogue of New Zealand's native and exotic trees.
+            </Text>
+          </View>
+        </View>
+
+        <View className="px-6 pt-8">
           <Text className="font-iosevka-semibold text-xl text-bark">What you can do</Text>
 
           <View className="mt-4 gap-4">
