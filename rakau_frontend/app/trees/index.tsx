@@ -19,6 +19,7 @@ import { ConditionBadge } from "../../components/ConditionBadge";
 import { RangeFilter } from "../../components/RangeFilter";
 import { SignificanceBadge } from "../../components/SignificanceBadge";
 import colors from "../../constants/colors";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useRefreshOnFocus } from "../../hooks/useRefreshOnFocus";
 import { shortDateTime } from "../../utils/dates";
 import {
@@ -131,6 +132,7 @@ function TreeCard({ tree }: { tree: Tree }) {
 }
 
 export default function TreesScreen() {
+  const user = useCurrentUser();
   const [filters, setFilters] = useState<TreeFilters>({});
   // Kept apart from filters so "Clear filters" leaves the sort alone
   const [ordering, setOrdering] = useState<TreeOrdering>("newest");
@@ -218,12 +220,16 @@ export default function TreesScreen() {
       <View className="px-6 pt-4">
         <View className="flex-row items-center justify-between gap-3">
           <Text className="font-iosevka-bold text-3xl text-bark">Tree catalogue</Text>
-          <Pressable
-            onPress={() => router.push("/trees/new")}
-            className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
-          >
-            <Text className="font-iosevka-semibold text-sm text-white">+ Add</Text>
-          </Pressable>
+          {/* Only signed-in users can add, so it's hidden when logged out (UAT I5, #60).
+              Also hidden while the check runs, so it never flashes up for a logged-out user */}
+          {user && (
+            <Pressable
+              onPress={() => router.push("/trees/new")}
+              className="rounded-full bg-leaf px-4 py-2 active:opacity-80"
+            >
+              <Text className="font-iosevka-semibold text-sm text-white">+ Add</Text>
+            </Pressable>
+          )}
         </View>
         <Text className="mt-1 font-iosevka text-sm text-bark/70">
           Every tree recorded across Aotearoa.
