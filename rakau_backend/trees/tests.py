@@ -68,6 +68,41 @@ class CreateTreeTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    # Restored from v0.2.0 (TreeValidationTests, removed in 971ae5b; #65)
+    def test_invalid_create_returns_400_per_field_and_creates_nothing(self):
+        self.client.force_authenticate(self.user)
+        cases = {
+            "species_slug": {"species_slug": "not-a-tree"},
+            "condition": {"condition": "sad"},
+            "latitude": {"latitude": 200},
+            "longitude": {"longitude": -500},
+        }
+        for field, overrides in cases.items():
+            with self.subTest(field=field):
+                response = self.client.post(self.url, self.payload(**overrides), format="json")
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                # The shared shape: {"field": ["message", ...]}
+                self.assertIsInstance(response.data[field], list)
+                self.assertTrue(response.data[field])
+        self.assertEqual(Tree.objects.count(), 0)
+
+    def test_missing_required_fields_return_400(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.post(self.url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        for field in ["species_slug", "latitude", "longitude", "condition"]:
+            self.assertIn(field, response.data)
+        self.assertEqual(Tree.objects.count(), 0)
+
+    def test_retired_species_is_rejected(self):
+        self.client.force_authenticate(self.user)
+        self.species.is_active = False
+        self.species.save()
+        response = self.client.post(self.url, self.payload(), format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("species_slug", response.data)
+        self.assertEqual(Tree.objects.count(), 0)
+
 
 # REQ-01 AC4 to AC6: only a tree's owner can change or remove it (#43)
 class UpdateDeleteTreeTests(APITestCase):
@@ -155,6 +190,22 @@ class UpdateDeleteTreeTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.client.delete(self.url).status_code, status.HTTP_204_NO_CONTENT)
 
+    # Restored from v0.2.0 (TreePermissionTests, removed in 971ae5b; #65). The rest of that
+    # class is covered by the tests above
+    def test_anyone_can_read_a_tree(self):
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+
+    def test_tree_without_owner_can_only_be_changed_by_staff(self):
+        self.tree.owner = None
+        self.tree.save()
+        self.client.force_authenticate(self.owner)
+        response = self.client.patch(self.url, {"condition": "stressed"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        staff = User.objects.create_user("ranger", email="ranger@example.com", is_staff=True)
+        self.client.force_authenticate(staff)
+        response = self.client.patch(self.url, {"condition": "stressed"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
 class MyTreesTests(APITestCase):
     url = "/api/trees/mine/"
@@ -208,8 +259,10 @@ class MyTreesTests(APITestCase):
         self.assertIsNone(page1["previous"])
 
         page2 = self.client.get(self.url, {"page": 2}).data
+        self.assertEqual(page2["count"], 25)
         self.assertEqual(len(page2["results"]), 5)
         self.assertIsNone(page2["next"])
+        self.assertIsNotNone(page2["previous"])
 
     def test_page_out_of_range_returns_404(self):
         self.make_trees(self.user, 1)
@@ -291,6 +344,48 @@ class SpeciesTests(APITestCase):
         response = self.client.get(f"{self.url}{self.species.id}/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["tree_count"], 1)
+
+
+# Restored from v0.2.0 (removed in 971ae5b; #65)
+class SpeciesPermissionTests(APITestCase):
+    """IsAdminOrReadOnly: anyone reads the species list, only staff change it."""
+
+    url = "/api/species/"
+
+    def setUp(self):
+        self.user = User.objects.create_user("kauri_fan", email="kauri@example.com", password="x")
+        self.staff = User.objects.create_user(
+            "ranger", email="ranger@example.com", password="x", is_staff=True
+        )
+        self.species = Species.objects.create(
+            common_name="Kauri", scientific_name="Agathis australis"
+        )
+        self.new_species = {"common_name": "Rimu", "scientific_name": "Dacrydium cupressinum"}
+
+    def test_anyone_can_read_species(self):
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+
+    def test_regular_user_cannot_create_update_or_delete(self):
+        self.client.force_authenticate(self.user)
+        detail = f"{self.url}{self.species.id}/"
+        create = self.client.post(self.url, self.new_species, format="json")
+        update = self.client.patch(detail, {"common_name": "Not Kauri"}, format="json")
+        delete = self.client.delete(detail)
+        for response in (create, update, delete):
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Species.objects.count(), 1)
+        self.species.refresh_from_db()
+        self.assertEqual(self.species.common_name, "Kauri")
+
+    def test_unauthenticated_cannot_create(self):
+        response = self.client.post(self.url, self.new_species, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_staff_can_create(self):
+        self.client.force_authenticate(self.staff)
+        response = self.client.post(self.url, self.new_species, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Species.objects.count(), 2)
 
 
 class SignificanceFilterTests(APITestCase):
