@@ -58,18 +58,14 @@ export function PhotoGallery({ treeId, photos, canModify, onPhotosChange }: Phot
     if (result.canceled) return;
 
     const asset = result.assets[0];
-    const type = asset.mimeType ?? "image/jpeg";
     setChoosingSource(false);
     setUploading(true);
     try {
-      const photo = await uploadTreePhoto(treeId, {
-        uri: asset.uri,
-        name: asset.fileName ?? `tree-photo.${type.split("/")[1]}`,
-        type,
-        file: asset.file,
-      });
+      const photo = await uploadTreePhoto(treeId, { uri: asset.uri, file: asset.file });
       onPhotosChange([...photos, photo]);
     } catch (e) {
+      // The friendly message below hides the cause, so keep it in the Expo terminal
+      if (!(e instanceof ApiError)) console.warn("Photo upload failed:", e);
       // e.g. "Photos must be 5 MB or smaller." or "Upload a JPEG, PNG or WebP image."
       setError(
         e instanceof ApiError

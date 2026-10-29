@@ -1,3 +1,5 @@
+import { File as DeviceFile } from "expo-file-system";
+
 import { request, toApiError } from "./client";
 import type { Paginated, Tree, TreeFilters, TreeInput, TreePhoto } from "./types";
 
@@ -88,19 +90,18 @@ export async function deleteTree(id: number): Promise<void> {
 
 // A picked or taken image, as expo-image-picker describes it
 export interface PhotoFile {
-  uri: string;
-  name: string;
-  type: string; // e.g. "image/jpeg"
-  file?: File; // web only: the browser's File, which FormData needs there
+  uri: string; // file:// on a phone
+  file?: File; // web only: the browser's File
 }
 
 // Upload a photo to a tree (owner or staff). A rejected file throws an ApiError whose
 // fieldErrors.image says why, e.g. too large, the wrong type, or the tree already has 5
 export async function uploadTreePhoto(treeId: number, photo: PhotoFile): Promise<TreePhoto> {
   const body = new FormData();
-  // React Native's FormData takes { uri, name, type } in place of a Blob
-  const native = { uri: photo.uri, name: photo.name, type: photo.type } as unknown as Blob;
-  body.append("image", photo.file ?? native);
+  // SDK 58's fetch (expo/fetch) only accepts Blob-like parts, and rejects React Native's
+  // { uri, name, type } with "Unsupported FormDataPart implementation". expo-file-system's
+  // File is a Blob read from the uri, named after the file, e.g. "abc123.jpeg"
+  body.append("image", photo.file ?? new DeviceFile(photo.uri));
 
   const response = await request(`/trees/${treeId}/photos/`, { method: "POST", body });
 
