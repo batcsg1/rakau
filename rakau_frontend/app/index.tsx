@@ -2,12 +2,14 @@ import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Image as ExpoImage } from "expo-image";
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 
 type Feature = {
   emoji: string;
   title: string;
   description: string;
+  // Where tapping the card goes
+  href: Href;
 };
 
 const FEATURES: Feature[] = [
@@ -15,16 +17,21 @@ const FEATURES: Feature[] = [
     emoji: "🌱",
     title: "Add & Record Trees",
     description: "Log native and exotic trees you find with species, location and condition.",
+    // Signed-out users are sent to login and brought back here by useRequireAuth
+    href: "/trees/new",
   },
   {
     emoji: "🗺️",
     title: "Browse the Catalogue",
     description: "Discover trees recorded by others, from your street to across Aotearoa.",
+    href: "/trees",
   },
   {
     emoji: "🔎",
     title: "Filter & Discover",
     description: "Search by species, genus, height, girth, region or significance status.",
+    // The catalogue's filter rows are at the top of that screen
+    href: "/trees",
   },
 ];
 
@@ -81,10 +88,15 @@ export default function HomeScreen() {
           <Text className="font-iosevka-semibold text-xl text-bark">What you can do</Text>
 
           <View className="mt-4 gap-4">
+            {/* They look like buttons, so they act like them (#72) */}
             {FEATURES.map((feature) => (
-              <View
+              <Pressable
                 key={feature.title}
-                className="flex-row items-start gap-4 rounded-2xl border border-leaf/20 bg-white p-4 shadow-sm"
+                onPress={() => router.push(feature.href)}
+                accessibilityRole="button"
+                accessibilityLabel={feature.title}
+                accessibilityHint={feature.description}
+                className="flex-row items-center gap-4 rounded-2xl border border-leaf/20 bg-white p-4 shadow-sm active:opacity-80"
               >
                 <Text className="text-3xl">{feature.emoji}</Text>
                 <View className="flex-1">
@@ -93,7 +105,10 @@ export default function HomeScreen() {
                     {feature.description}
                   </Text>
                 </View>
-              </View>
+                <Text className="font-iosevka text-2xl text-leaf" importantForAccessibility="no">
+                  ›
+                </Text>
+              </Pressable>
             ))}
           </View>
 
