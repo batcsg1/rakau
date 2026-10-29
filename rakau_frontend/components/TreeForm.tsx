@@ -291,6 +291,7 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
           <View className="gap-4">
             <FormField
               label="Height (m)"
+              hint="From the ground to the highest point of the tree."
               placeholder="e.g. 12.5"
               value={height}
               onChangeText={setHeight}
@@ -299,6 +300,7 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
             />
             <FormField
               label="Trunk girth (cm)"
+              hint="The distance around the trunk, measured with a tape at 1.4 m above the ground (about chest height)."
               placeholder="e.g. 240"
               value={girth}
               onChangeText={setGirth}
@@ -307,6 +309,7 @@ export function TreeForm({ initial, submitLabel, onSubmit }: TreeFormProps) {
             />
             <FormField
               label="Crown spread (m)"
+              hint="How wide the tree's leafy top is: the distance from one edge of the branches to the other, at the widest point."
               placeholder="e.g. 8"
               value={crownSpread}
               onChangeText={setCrownSpread}
