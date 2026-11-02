@@ -8,8 +8,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { ApiError } from "../../../api/client";
@@ -24,6 +25,32 @@ import { SignificanceBadge } from "../../../components/SignificanceBadge";
 import colors from "../../../constants/colors";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { useRefreshOnFocus } from "../../../hooks/useRefreshOnFocus";
+
+// The page's frame in every state (loading, error, loaded), so the background doesn't jump
+// when the tree arrives
+function Screen({ children }: { children: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    // The top inset is applied to the nav bar's wrapper instead, so the solid sand runs up
+    // behind the status bar rather than leaving a strip of the faded photo above the nav bar
+    <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 bg-sand">
+      <StatusBar style="dark" />
+      {/* ImageBackground is deprecated in SDK 58, so the photo is an absolutely positioned
+          expo-image behind the content, matching the other screens */}
+      <ExpoImage
+        source={require("../../../assets/cedar_of_lebanon.jpg")}
+        contentFit="cover"
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+      />
+      {/* Fades the photo so the details stay readable */}
+      <View className="absolute inset-0 bg-sand/80" />
+      <View style={{ paddingTop: insets.top }} className="bg-sand">
+        <NavBar />
+      </View>
+      {children}
+    </SafeAreaView>
+  );
+}
 
 // "30.00" -> "30 m"; missing measurements show as a dash
 function measurement(value: string | null, unit: string): string {
@@ -128,20 +155,16 @@ export default function TreeDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-sand">
-        <StatusBar style="dark" />
-        <NavBar />
+      <Screen>
         {backButton}
         <ActivityIndicator className="mt-10" color={colors.leaf} />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   if (error || !tree) {
     return (
-      <SafeAreaView className="flex-1 bg-sand">
-        <StatusBar style="dark" />
-        <NavBar />
+      <Screen>
         {backButton}
         <View className="mx-6 mt-6 items-center rounded-2xl bg-white p-6">
           <Text className="text-center font-iosevka-semibold text-base text-bark">
@@ -155,14 +178,12 @@ export default function TreeDetailScreen() {
             <Text className="font-iosevka-semibold text-sm text-white">Try again</Text>
           </Pressable>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-sand">
-      <StatusBar style="dark" />
-      <NavBar />
+    <Screen>
       <ScrollView
         contentContainerClassName="pb-12"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -288,6 +309,6 @@ export default function TreeDetailScreen() {
           <DetailRow label="Last updated" value={formatDateTime(tree.updated_at)} />
         </Section>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

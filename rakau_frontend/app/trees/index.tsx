@@ -97,7 +97,9 @@ function TreeCard({ tree }: { tree: Tree }) {
   return (
     <Pressable
       onPress={() => router.push(`/trees/${tree.id}`)}
-      className="mx-6 rounded-2xl border border-leaf/20 bg-white p-4 shadow-sm active:opacity-80"
+      // Faint sand fill like the My Trees rows. No shadow: on Android it shows through a
+      // see-through background as a dark smudge
+      className="mx-6 rounded-2xl border border-leaf/20 bg-sand/50 p-4 active:opacity-80"
     >
       <View className="flex-row items-start justify-between gap-3">
         <View className="flex-1">
