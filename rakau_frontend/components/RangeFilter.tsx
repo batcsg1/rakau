@@ -53,8 +53,9 @@ export function RangeFilter({ label, min, max, onChange, errors }: RangeFilterPr
       placeholderTextColor={`${colors.bark}80`}
       keyboardType="decimal-pad"
       returnKeyType="done"
-      className={`flex-1 rounded-xl border bg-white px-4 py-2 font-iosevka text-sm text-bark ${
-        hasError ? "border-red-700" : "border-leaf/40"
+      // A faint sand fill with a white outline, matching FormField
+      className={`flex-1 rounded-xl border bg-sand/50 px-4 py-2 font-iosevka text-sm text-bark ${
+        hasError ? "border-red-700" : "border-white"
       }`}
     />
   );

@@ -20,8 +20,9 @@ export function FormField({ label, hint, errors, ...inputProps }: FormFieldProps
       <TextInput
         accessibilityHint={hint}
         placeholderTextColor={`${colors.bark}80`}
-        className={`rounded-xl border bg-white px-4 py-3 font-iosevka text-base text-bark ${
-          hasError ? "border-red-700" : "border-leaf/30"
+        // A faint sand fill with a white outline, so the background photo still shows through
+        className={`rounded-xl border bg-sand/50 px-4 py-3 font-iosevka text-base text-bark ${
+          hasError ? "border-red-700" : "border-white"
         }`}
         {...inputProps}
       />

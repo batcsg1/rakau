@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { deleteTree, getMyTrees } from "../../api/treesApi";
@@ -46,7 +47,7 @@ function TreeRow({
     <Pressable
       onPress={() => router.push(`/trees/${tree.id}`)}
       className={`flex-row items-center gap-4 border-b border-bark/10 px-6 py-4 active:opacity-70 ${
-        highlighted ? "border-l-4 border-l-leaf bg-leaf/10" : ""
+        highlighted ? "border-l-4 border-l-leaf bg-leaf/10" : "bg-sand/50"
       } ${dimmed ? "opacity-50" : ""}`}
     >
       {/* Placeholder thumbnail until trees have photos */}
@@ -70,7 +71,7 @@ function TreeRow({
 
 function SkeletonRow() {
   return (
-    <View className="flex-row items-center gap-4 border-b border-bark/10 px-6 py-4">
+    <View className="flex-row items-center gap-4 border-b border-bark/10 bg-sand/50 px-6 py-4">
       <View className="h-14 w-14 rounded-lg bg-bark/10" />
       <View className="flex-1 gap-2">
         <View className="h-4 w-3/5 rounded bg-bark/10" />
@@ -85,6 +86,7 @@ export default function MyTreesScreen() {
   const { added } = useLocalSearchParams<{ added?: string }>();
 
   const checkingAuth = useRequireAuth("/trees/mine");
+  const insets = useSafeAreaInsets();
   const [condition, setCondition] = useState<Condition>();
   const [ordering, setOrdering] = useState<TreeOrdering>("newest");
   const [trees, setTrees] = useState<Tree[]>([]);
@@ -333,9 +335,22 @@ export default function MyTreesScreen() {
     );
 
   return (
-    <SafeAreaView className="flex-1 bg-sand">
+    // The top inset is applied to the nav bar's wrapper instead, so the solid sand runs up
+    // behind the status bar rather than leaving a strip of the faded photo above the nav bar
+    <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 bg-sand">
       <StatusBar style="dark" />
-      <NavBar />
+      {/* ImageBackground is deprecated in SDK 58, so the photo is an absolutely positioned
+          expo-image behind the content, matching the catalogue */}
+      <ExpoImage
+        source={require("../../assets/whakarewarewa.jpg")}
+        contentFit="cover"
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+      />
+      {/* Fades the photo so the filters and cards stay readable */}
+      <View className="absolute inset-0 bg-sand/80" />
+      <View style={{ paddingTop: insets.top }} className="bg-sand">
+        <NavBar />
+      </View>
       <FlatList
         data={loading ? [] : trees}
         keyExtractor={(tree) => String(tree.id)}

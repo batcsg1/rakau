@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { register } from "../api/auth";
@@ -66,6 +67,15 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView className="flex-1 bg-sand">
       <StatusBar style="dark" />
+      {/* ImageBackground is deprecated in SDK 58, so the photo is an absolutely positioned
+          expo-image behind the content, matching the other screens */}
+      <ExpoImage
+        source={require("../assets/arthur_street_giant_sequoia.jpg")}
+        contentFit="cover"
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+      />
+      {/* Fades the photo so the form stays readable */}
+      <View className="absolute inset-0 bg-sand/80" />
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
