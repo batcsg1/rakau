@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 
 import { getSpecies } from "../../api/speciesApi";
@@ -133,6 +134,7 @@ function TreeCard({ tree }: { tree: Tree }) {
 
 export default function TreesScreen() {
   const user = useCurrentUser();
+  const insets = useSafeAreaInsets();
   const [filters, setFilters] = useState<TreeFilters>({});
   // Kept apart from filters so "Clear filters" leaves the sort alone
   const [ordering, setOrdering] = useState<TreeOrdering>("newest");
@@ -387,9 +389,22 @@ export default function TreesScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-sand">
+    // The top inset is applied to the nav bar's wrapper instead, so the solid sand runs up
+    // behind the status bar rather than leaving a strip of the faded photo above the nav bar
+    <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 bg-sand">
       <StatusBar style="dark" />
-      <NavBar />
+      {/* ImageBackground is deprecated in SDK 58, so the photo is an absolutely positioned
+          expo-image behind the content, matching the home screen */}
+      <ExpoImage
+        source={require("../../assets/decaying-tree.jpg")}
+        contentFit="cover"
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+      />
+      {/* Fades the photo so the filters and cards stay readable */}
+      <View className="absolute inset-0 bg-sand/80" />
+      <View style={{ paddingTop: insets.top }} className="bg-sand">
+        <NavBar />
+      </View>
       <FlatList
         data={loading || error || hasFilterErrors ? [] : trees}
         keyExtractor={(tree) => String(tree.id)}
