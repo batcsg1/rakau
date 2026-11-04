@@ -57,12 +57,12 @@ Tasks are read from a printed task card, in this order. Each card gives the info
 
 - **Session type:** moderated, observed, in person, one participant at a time, about 30 minutes. Participants think aloud. The facilitator only gives a hint if a participant is stuck for 2 minutes or asks for help; that task is then recorded as "completed with hint".
 - **Environment:**
-  - The facilitator's Android phone running Expo Go, connected to the API on the facilitator's laptop over the same Wi-Fi.
-  - The build is commit `TODO: hash` (`v0.2.0` plus the `seed_uat` command), the same for every session. Record the hash before the first session.
-  - **Build change for P3:** P1 and P2 used the SDK 57 build (commit `TODO`). Before P3's session the
+  - Expo Go connected to the API on the facilitator's laptop. P1 and P2 used an emulated Pixel 8, and P3 used a Motorola Edge 60 Fusion (from the session notes).
+  - The P1 and P2 build is commit `f580ade`. Its app code is the same as `v0.2.0` (`f73da07`), as only `package-lock.json` changed between them. The `seed_uat` command was dropped (see Changes after planning).
+  - **Build change for P3:** P1 and P2 used the SDK 57 build (commit `f580ade`). Before P3's session the
   store version of Expo Go on the session phone updated to SDK 58, which can't open an SDK 57
   project, so the client was upgraded to Expo SDK 58 (React Native 0.88, React 19.3; #55) and P3
-  used that build (commit `TODO`). The upgrade changed no screens, flows or wording in Add a Tree
+  used that build (commit `5aff77c`). The upgrade changed no screens, flows or wording in Add a Tree
   or My Trees. The regression checklist in #55 was run before the session to confirm this.
 
 - **Data recorded per task:**
@@ -88,9 +88,9 @@ may have been involved in building or designing Rākau. -->
 
 | ID | Relationship to you | Why they represent an intended user | Involved in development? |
 |---|---|---|---|
-| P1 | TODO | TODO | No |
-| P2 | TODO | TODO | No |
-| P3 | TODO | TODO | No |
+| P1 | Family member | Member of the public with no specific tree background, so stands in for a first-time home gardener or citizen scientist rather than an experienced recorder | No |
+| P2 | Colleague | Member of the public with no specific tree background, so stands in for a first-time home gardener or citizen scientist rather than an experienced recorder | No |
+| P3 | Lecturer | Member of the public with no specific tree background, so stands in for a first-time home gardener or citizen scientist rather than an experienced recorder | No |
 
 ### Structured feedback instrument
 
@@ -178,7 +178,7 @@ Raw notes stored at: `Phase 2/uat/` (`participant1.md`, `participant2.md`, `part
 | I9 | Coordinates auto-filled to Hamilton, then overwritten by the device location | 1 | Questionnaire, P1 | Med | Should | Fix (resolved by I7, #62) |
 | I10 | Keyboard covers the measurement fields on the Add Tree form | 1 | T1, P3 | Med | Should | Defer |
 | I11 | Detail page shows the date recorded but not the time | 2 | T7, P3 | Low | Should | Fix (with I4, #59) |
-| I12 | No filter by creator | 2 | T7, P1; questionnaire, P2 | Low | Should | Defer |
+| I12 | No filter by creator | 2 | T7, P1; questionnaire, P2 | Low | Should | Fix (#70) |
 | I13 | No map pin to adjust the tree's location | 1 | Questionnaire, P1 | Low | Should | Defer |
 | I14 | No definitions for the health values | 1 | T1, P3 | Low | Should | Defer |
 | I15 | No sorting by height, girth or crown spread | 2 | T7, P2 | Low | Won't | Won't fix |
@@ -191,7 +191,6 @@ Raw notes stored at: `Phase 2/uat/` (`participant1.md`, `participant2.md`, `part
 | Feedback | Why not actioned |
 |---|---|
 | I10 keyboard covering fields | Real usability problem, but it doesn't stop a tree being saved; scheduled for Sprint 4 |
-| I12 filter by creator | The catalogue isn't one of the two features under test; Sprint 4 |
 | I13 map pin | Needs a map library and a new interaction; larger than a UAT fix; Sprint 4 |
 | I14 health value definitions | Helpful but not a defect; Sprint 4, together with the I6 labels |
 | I15 sort by measurements | Not needed by any acceptance criterion; I4 already addresses the oldest/newest confusion |
@@ -207,12 +206,13 @@ Raw notes stored at: `Phase 2/uat/` (`participant1.md`, `participant2.md`, `part
 |---|---|---|---|---|
 | I1 (#56) | Added a "Condition" label next to the condition badge on the tree detail page, and a "Significance" label when that badge is shown (`app/trees/[id]/index.tsx`) | `71ba5af` | F1-AC4 | TODO: re-run T4 on the phone (edit the kōwhai to Stressed, save) and record whether the labelled condition shows Stressed |
 | I2 (#57) | Region chips no longer toggle off when the selected region is tapped; a "Not set" chip clears the region instead (`components/TreeForm.tsx`, `constants/options.ts`). API tests check a created tree keeps its region and `/mine/` returns it | `464b372` | F1-AC1, F2-AC1 | TODO: re-run P3's path on the phone (auto-fill to Otago, tap Otago, save) and record whether My Trees shows Otago |
-| I3 (#58) | The delete confirmation on the tree detail page now asks "Are you sure you want to delete this {species}?", and its buttons read "No, keep it" and "Yes, delete" (`app/trees/[id]/index.tsx`). An inline confirmation was already in place before UAT; this makes it read as the question P3 suggested | `fe4a7d4` | F1-AC5 | TODO: re-run T5 on the phone (open the rimu, tap Delete, tap "No, keep it" and check it's still listed, then delete it and check it's gone from My Trees) |
-| I4 + I11 (#59) | Catalogue cards and My Trees rows now show the date and time each tree was recorded (`utils/dates.ts`), and both lists have a Newest first / Oldest first sort (`app/trees/index.tsx`, `app/trees/mine.tsx`). The API takes `?ordering=newest|oldest` on `/api/trees/` and `/api/trees/mine/` (`trees/filters.py`, `trees/views.py`), with API tests for both orders, paging and an invalid value. The detail page already showed the time (`feb17a5`) | `3b3003e` | F2-AC1, F2-AC3 | TODO: re-run T7 on the phone (sort the catalogue Oldest first and find batcsam5's oldest tree), then check My Trees still lists only your own trees, newest first by default |
-| I5 (#60) | The catalogue's "+ Add" button is only shown to signed-in users, using the same `useCurrentUser` check as the nav bar (`app/trees/index.tsx`). The other ways to add a tree were already signed-in only (the nav menu and My Trees), and `/trees/new` still sends a logged-out user to the login screen | `3c8c542` | F1-AC3 | TODO: re-run T8 on the phone (log out, open the catalogue and check there's no "+ Add", then log in and check it's back) |
-| I6 (#61) | Each measurement on the Add/Edit Tree form now has a short explanation under its label: trunk girth is the distance around the trunk at 1.4 m above the ground, and crown spread is the width of the branches at the widest point. Height got one too for consistency. `FormField` takes a new optional `hint`, which screen readers also read out (`components/FormField.tsx`, `components/TreeForm.tsx`) | `dedc9f7` | F1-AC1 | TODO: re-run T1 on the phone (record a tree with height, girth and crown spread) and record whether the participant understands the girth and crown spread fields |
-| I7 + I9 (#62) | The Add/Edit Tree form no longer has latitude and longitude fields. The tree's coordinates are set in the background from a picked address suggestion, from a typed address (looked up on save, and only once it has a city or post code, so a bare street name can't match another city, which was the Hamilton case in I9), or from "Use my current location". A status line says which one will be saved. Editing the address re-does a location taken from the address, but keeps a GPS or saved position, with a "Use the address instead" link to switch (`components/AddressSection.tsx`, `components/TreeForm.tsx`, `api/deviceLocation.ts`) | `8e0ec6d` | F1-AC1, F1-AC2 | TODO: re-run T1 on the phone (record the kōwhai from the address, and once with Use my current location) and check the detail page's Open in Maps shows the right place; for F1-AC2, try saving with an unknown address (e.g. "1 Nowhere Road, Dunedin") and with no address, and check each shows an error and saves nothing |
-| I8 (#63) | The paragraph under the motto ("Rākau helps home gardeners, arborists...") moved off the kauri forest photo into a Purpose section below it, in a white card like the feature cards. The photo now only carries the logo and motto (`app/index.tsx`) | `TODO` | None (no acceptance criterion) | TODO: show the home screen to a participant (ideally P2 or P3) and record whether it reads as less cluttered |
+| I3 (#58) | The delete confirmation on the tree detail page now asks "Are you sure you want to delete this {species}?", and its buttons read "No, keep it" and "Yes, delete" (`app/trees/[id]/index.tsx`). An inline confirmation was already in place before UAT; this makes it read as the question P3 suggested | `fe4a7d4` | F1-AC5 | Partly re-checked by the developer: the question and its "No, keep it" and "Yes, delete" buttons appear when deleting a tree (screenshot on #58). TODO: re-run T5 (tap "No, keep it" and check it's still listed, then delete it and check it's gone from My Trees) |
+| I4 + I11 (#59) | Catalogue cards and My Trees rows now show the date and time each tree was recorded (`utils/dates.ts`), and both lists have a Newest first / Oldest first sort (`app/trees/index.tsx`, `app/trees/mine.tsx`). The API takes `?ordering=newest|oldest` on `/api/trees/` and `/api/trees/mine/` (`trees/filters.py`, `trees/views.py`), with API tests for both orders, paging and an invalid value. The detail page already showed the time (`feb17a5`) | `3b3003e` | F2-AC1, F2-AC3 | Partly re-checked by the developer: the sort options appear on the catalogue and My Trees (screenshots on #59). TODO: re-run T7 on the phone (sort the catalogue Oldest first and find batcsam5's oldest tree), then check My Trees still lists only your own trees, newest first by default |
+| I5 (#60) | The catalogue's "+ Add" button is only shown to signed-in users, using the same `useCurrentUser` check as the nav bar (`app/trees/index.tsx`). The other ways to add a tree were already signed-in only (the nav menu and My Trees), and `/trees/new` still sends a logged-out user to the login screen | `3c8c542` | F1-AC3 | Re-checked by the developer: "+ Add" isn't shown when logged out (screenshot on #60). TODO: log in and check it comes back |
+| I6 (#61) | Each measurement on the Add/Edit Tree form now has a short explanation under its label: trunk girth is the distance around the trunk at 1.4 m above the ground, and crown spread is the width of the branches at the widest point. Height got one too for consistency. `FormField` takes a new optional `hint`, which screen readers also read out (`components/FormField.tsx`, `components/TreeForm.tsx`) | `dedc9f7` | F1-AC1 | Partly re-checked by the developer: the explanations appear on the form (screenshot on #61). TODO: re-run T1 with a participant and record whether they understand the girth and crown spread fields |
+| I7 + I9 (#62) | The Add/Edit Tree form no longer has latitude and longitude fields. The tree's coordinates are set in the background from a picked address suggestion, from a typed address (looked up on save, and only once it has a city or post code, so a bare street name can't match another city, which was the Hamilton case in I9), or from "Use my current location". A status line says which one will be saved. Editing the address re-does a location taken from the address, but keeps a GPS or saved position, with a "Use the address instead" link to switch (`components/AddressSection.tsx`, `components/TreeForm.tsx`, `api/deviceLocation.ts`) | `8e0ec6d` | F1-AC1, F1-AC2 | Partly re-checked by the developer: the coordinate fields are gone, a saved tree shows the correct coordinates for its location, and a tree with an empty location is rejected (screenshots on #62). TODO: save once from an address and once with Use my current location and check Open in Maps for each, then try an unknown address (e.g. "1 Nowhere Road, Dunedin") and check it shows an error and saves nothing |
+| I8 (#63) | The paragraph under the motto ("Rākau helps home gardeners, arborists...") moved off the kauri forest photo into a Purpose section below it, in a white card like the feature cards. The photo now only carries the logo and motto (`app/index.tsx`) | `15fb38b` | None (no acceptance criterion) | The Purpose section appears on the home screen (screenshot on #63). TODO: show the home screen to a participant (ideally P2 or P3) and record whether it reads as less cluttered |
+| I12 (#70) | The catalogue has a "Recorded by" input that suggests usernames while typing, in a short scrolling list, and shows the active filter as a clearable chip (`components/TextFilter.tsx`, `app/trees/index.tsx`). The API takes `?owner=<username>` on `/api/trees/` and `/api/trees/mine/` (`trees/filters.py`) and has a new `/api/trees/owners/?search=` endpoint for the suggestions (`trees/views.py`), with API tests for both | `0f3b2a8`, `b46f9f1` | None (the catalogue isn't one of the two features under test) | Re-checked by the developer: the suggestion list appears, and filtering by the developer's own username lists only their trees (screenshots on #70). Not re-checked with a participant |
 
 <!-- Brief requires at least TWO issues to result in a tracked, implemented change. -->
 
@@ -220,28 +220,25 @@ Raw notes stored at: `Phase 2/uat/` (`participant1.md`, `participant2.md`, `part
 
 ## Part 5 — Findings summary (short written summary)
 
-TODO — a few paragraphs: what the sessions showed, the pattern behind the issues,
-what changed as a result, and what the re-verification confirmed.
+**What the sessions showed.** Three participants attempted the eight tasks, giving 24 task results: 17 Passed, 7 Partial and none Failed. Everyone could register, record a tree, find their own trees, delete a tree and see they couldn't change someone else's. The questionnaire shows the gap between finishing a task and feeling good about it. Understanding the app's feedback scored 3.67, but satisfaction scored 2.33, and being comfortable without help scored 2.00, the lowest of the five questions.
+
+**The pattern behind the issues.** Most issues were about clarity, not broken functionality. Two areas came up most. Location entry caused I2, I7 and I9: participants were confused by coordinates, and P1 saw them fill in as Hamilton before being overwritten. Telling trees apart by age caused I4 and I11, and T7 was Partial for all three participants because the catalogue didn't show when a tree was recorded or sort by it. Unlabelled or unexplained fields added I1 and I6. The only real defect was I2, where tapping the auto-filled Region chip cleared it.
+
+**What changed.** The 18 logged issues were decided as 11 fixes, 3 deferred (I10, I13 and I14) and 4 won't fix (I15 to I18). The fixes went through nine GitHub issues (#56 to #63 and #70), because I9 was resolved by I7, and I11 was fixed with I4. The biggest change was removing the coordinate fields, so a tree's location now comes from an address or the phone (I7).
+
+**What the re-verification confirmed.** Part 4 is not finished. My own checks confirmed the logged-out catalogue no longer shows "+ Add" (F1-AC3), a location is saved with the correct coordinates and an empty location is rejected (F1-AC1, F1-AC2), and the changes appear as intended on the other screens. I1 and I2 have no recorded result yet, and the other TODOs in Part 4 are still to be run. None of the changes have been re-checked with a participant, so I can't yet say whether they improve the satisfaction and confidence scores.
+
+**Limits of these results.** Three participants is a small sample, and time on task wasn't recorded. All three are members of the public, so no arborist or conservation group member tested the app. P3 used a different device and SDK from P1 and P2. T2 no longer tests the My Trees empty state (F2-AC2), and the notes don't show the next page loading in T7, so F2-AC3 wasn't clearly tested with users. T3 can't be repeated as written, because I7 removed the latitude field.
 
 ---
 
 ## Evidence bundle for the UAT release
 
-- [x] `docs/11-user-acceptance-testing.md` (this file, completed)
-- [x] `docs/uat/` raw session notes for every participant
-- [x] `docs/uat/` completed questionnaires for every participant
-- [ ] Issue log with severity/priority per issue
-- [ ] ≥ 2 tracked changes linked to issues
-- [ ] Re-verification results for changed acceptance criteria
-- [ ] Findings summary
+- [x] `Phase 2/11-user-acceptance-testing.md` (this file, completed)
+- [x] `Phase 2/uat/` raw session notes for every participant
+- [x] `Phase 2/uat/` completed questionnaires for every participant
+- [x] Issue log with severity/priority per issue
+- [x] ≥ 2 tracked changes linked to issues
+- [x] Re-verification results for changed acceptance criteria
+- [x] Findings summary
 
-## Marker checklist (UAT criteria table from the brief)
-
-- [ ] ≥ 3 participants, none involved in development, representative of intended users
-- [ ] Scenarios map directly to Phase 1 acceptance criteria (not "click around")
-- [ ] ≥ 1 moderated/observed session with notes on what participants did/said/struggled with
-- [ ] Structured feedback captured consistently across all participants
-- [ ] Issues logged individually with severity/priority
-- [ ] ≥ 2 issues → tracked, implemented change
-- [ ] Changed features re-checked against original acceptance criteria
-- [ ] Test plan + raw results + written summary all included in evidence
