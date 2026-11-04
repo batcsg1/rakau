@@ -26,6 +26,17 @@ export async function getTrees(filters: TreeFilters = {}): Promise<Tree[]> {
   return response.json();
 }
 
+// Usernames of people who've recorded a tree, for the catalogue's "Recorded by" suggestions
+export async function getTreeOwners(search: string, signal?: AbortSignal): Promise<string[]> {
+  const response = await request(`/trees/owners/${toQuery({ search })}`, { signal });
+
+  if (!response.ok) {
+    throw await toApiError(response, `Failed to fetch usernames: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 // Get the signed-in user's Trees, 20 per page, newest first unless filters.ordering says otherwise
 export async function getMyTrees(page = 1, filters: TreeFilters = {}): Promise<Paginated<Tree>> {
   const query = toQuery({ ...filters, page });

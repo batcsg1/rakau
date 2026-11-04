@@ -7,7 +7,7 @@ import { router } from "expo-router";
 
 import { getSpecies } from "../../api/speciesApi";
 import { ApiError, type FieldErrors } from "../../api/client";
-import { getTrees } from "../../api/treesApi";
+import { getTreeOwners, getTrees } from "../../api/treesApi";
 import {
   REGION_LABELS,
   type Species,
@@ -263,6 +263,14 @@ export default function TreesScreen() {
         onSelect={(value) => value && setOrdering(value)}
         clearable={false}
       />
+      {/* Near the top so the keyboard doesn't cover its suggestions */}
+      <TextFilter
+        label="Recorded by"
+        placeholder="Start typing a username"
+        value={filters.owner}
+        onChange={(value) => setFilter("owner", value)}
+        fetchSuggestions={getTreeOwners}
+      />
       {species && species.length > 0 && (
         <FilterRow
           label="Species"
@@ -321,13 +329,6 @@ export default function TreesScreen() {
           errors={[...(filterErrors[range.min] ?? []), ...(filterErrors[range.max] ?? [])]}
         />
       ))}
-
-      <TextFilter
-        label="Recorded by"
-        placeholder="Username, e.g. kauri_fan"
-        value={filters.owner}
-        onChange={(value) => setFilter("owner", value)}
-      />
 
       {(activeRanges.length > 0 || filters.owner) && (
         <View className="mt-4 flex-row flex-wrap gap-2 px-6">
@@ -439,6 +440,7 @@ export default function TreesScreen() {
         ListHeaderComponent={header}
         ListEmptyComponent={emptyState}
         contentContainerClassName="pb-12"
+        keyboardShouldPersistTaps="handled"
         refreshing={refreshing}
         onRefresh={onRefresh}
       />

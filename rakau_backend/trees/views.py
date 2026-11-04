@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -18,6 +19,9 @@ from .serializers import (
     TreeSerializer,
 )
 
+# Enough to scroll through in the catalogue's "Recorded by" suggestions
+MAX_OWNER_SUGGESTIONS = 20
+
 
 class TreeViewSet(viewsets.ModelViewSet):
     queryset = Tree.objects.all()
@@ -36,6 +40,19 @@ class TreeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    # GET /api/trees/owners/?search=ka — usernames of people who've recorded a tree, for the
+    # catalogue's "Recorded by" suggestions. Open to anyone: every tree already shows its owner
+    @action(detail=False, methods=["get"])
+    def owners(self, request):
+        search = request.query_params.get("search", "").strip()
+        usernames = (
+            User.objects.filter(trees__isnull=False, username__icontains=search)
+            .order_by("username")
+            .values_list("username", flat=True)
+            .distinct()
+        )
+        return Response(list(usernames[:MAX_OWNER_SUGGESTIONS]))
 
     # GET /api/trees/mine/?page=n — the caller's own trees, newest first, 20 per page.
     # Owner scoping happens in the queryset, so another user's trees can never be returned;

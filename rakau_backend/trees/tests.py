@@ -833,3 +833,65 @@ class TreeOwnerFilterTests(APITestCase):
         response = self.client.get(f"{self.url}mine/", {"owner": "rimu_fan"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"], [])
+
+
+class TreeOwnersTests(APITestCase):
+    url = "/api/trees/owners/"
+
+    def setUp(self):
+        self.species = Species.objects.create(
+            common_name="Kauri", scientific_name="Agathis australis"
+        )
+        self.next_longitude = 170.0
+
+    def make_owner(self, username, trees=1):
+        owner = User.objects.create_user(username, password="x")
+        for _ in range(trees):
+            # Distinct longitudes keep each tree clear of the one-per-location constraint
+            self.next_longitude += 0.001
+            Tree.objects.create(
+                owner=owner,
+                species=self.species,
+                latitude=-45.0,
+                longitude=self.next_longitude,
+                condition="healthy",
+            )
+        return owner
+
+    def test_anyone_can_search_and_results_are_sorted(self):
+        self.make_owner("rimu_fan")
+        self.make_owner("kauri_fan")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, ["kauri_fan", "rimu_fan"])
+
+    def test_search_matches_any_part_of_the_name_ignoring_case(self):
+        self.make_owner("kauri_fan")
+        self.make_owner("rimu_fan")
+        self.make_owner("totara")
+        self.assertEqual(
+            self.client.get(self.url, {"search": "FAN"}).data, ["kauri_fan", "rimu_fan"]
+        )
+
+    def test_each_owner_is_listed_once(self):
+        self.make_owner("kauri_fan", trees=3)
+        self.assertEqual(self.client.get(self.url).data, ["kauri_fan"])
+
+    def test_users_without_trees_are_left_out(self):
+        self.make_owner("kauri_fan")
+        User.objects.create_user("no_trees", password="x")
+        self.assertEqual(self.client.get(self.url).data, ["kauri_fan"])
+
+    def test_no_match_returns_an_empty_list(self):
+        self.make_owner("kauri_fan")
+        self.assertEqual(self.client.get(self.url, {"search": "zzz"}).data, [])
+
+    def test_results_are_capped_at_twenty(self):
+        for i in range(25):
+            self.make_owner(f"user_{i:02}")
+        self.assertEqual(len(self.client.get(self.url).data), 20)
+
+    def test_does_not_clash_with_the_tree_detail_route(self):
+        self.make_owner("kauri_fan")
+        tree = Tree.objects.get()
+        self.assertEqual(self.client.get(f"/api/trees/{tree.id}/").data["id"], tree.id)
