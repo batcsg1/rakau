@@ -125,6 +125,7 @@ export interface TreeInput {
 // Query params the tree list endpoint filters on
 export interface TreeFilters {
   species_slug?: string;
+  owner?: string; // the username of the person who recorded the tree
   condition?: Condition;
   region?: Region;
   is_present?: boolean;

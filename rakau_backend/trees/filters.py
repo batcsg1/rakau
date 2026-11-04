@@ -28,6 +28,9 @@ class TreeFilterForm(forms.Form):
 # empty list. Adding a filter is one line here
 class TreeFilter(filters.FilterSet):
     species_slug = filters.CharFilter(field_name="species__slug")
+    # ?owner=<username>: free text, so an unknown name is an empty list rather than a 400.
+    # Ignores case because phone keyboards capitalise the first letter
+    owner = filters.CharFilter(field_name="owner__username", lookup_expr="iexact")
     condition = filters.ChoiceFilter(choices=Condition.choices)
     region = filters.ChoiceFilter(choices=Region.choices)
     is_present = filters.BooleanFilter()
@@ -49,6 +52,7 @@ class TreeFilter(filters.FilterSet):
         form = TreeFilterForm
         fields = [
             "species_slug",
+            "owner",
             "condition",
             "region",
             "is_present",

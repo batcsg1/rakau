@@ -774,3 +774,62 @@ class TreePhotoTests(APITestCase):
         self.client.force_authenticate(self.owner)
         self.client.delete(f"/api/trees/{self.tree.id}/")
         self.assertFalse(photo.image.storage.exists(name))
+
+
+class TreeOwnerFilterTests(APITestCase):
+    url = "/api/trees/"
+
+    def setUp(self):
+        self.kauri_fan = User.objects.create_user("kauri_fan", password="x")
+        self.rimu_fan = User.objects.create_user("rimu_fan", password="x")
+        self.species = Species.objects.create(
+            common_name="Kauri", scientific_name="Agathis australis"
+        )
+        self.otago_tree = self.make_tree(self.kauri_fan, 0, "otago")
+        self.canterbury_tree = self.make_tree(self.kauri_fan, 1, "canterbury")
+        self.other_tree = self.make_tree(self.rimu_fan, 2, "otago")
+        self.ownerless_tree = self.make_tree(None, 3, "otago")
+
+    def make_tree(self, owner, i, region):
+        # Distinct longitudes keep each tree clear of the one-per-location constraint
+        return Tree.objects.create(
+            owner=owner,
+            species=self.species,
+            latitude=-45.0,
+            longitude=170.0 + i / 1000,
+            condition="healthy",
+            region=region,
+        )
+
+    def ids(self, params):
+        response = self.client.get(self.url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return {t["id"] for t in response.data}
+
+    def test_returns_only_that_users_trees(self):
+        self.assertEqual(
+            self.ids({"owner": "kauri_fan"}), {self.otago_tree.id, self.canterbury_tree.id}
+        )
+
+    def test_ignores_case(self):
+        self.assertEqual(
+            self.ids({"owner": "Kauri_Fan"}), {self.otago_tree.id, self.canterbury_tree.id}
+        )
+
+    def test_only_matches_the_whole_username(self):
+        self.assertEqual(self.ids({"owner": "kauri"}), set())
+
+    def test_unknown_username_returns_an_empty_list(self):
+        self.assertEqual(self.ids({"owner": "nobody"}), set())
+
+    def test_blank_owner_applies_no_filter(self):
+        self.assertEqual(self.ids({"owner": ""}), set(Tree.objects.values_list("id", flat=True)))
+
+    def test_combines_with_other_filters(self):
+        self.assertEqual(self.ids({"owner": "kauri_fan", "region": "otago"}), {self.otago_tree.id})
+
+    def test_my_trees_cannot_be_used_to_see_another_users_trees(self):
+        self.client.force_authenticate(self.kauri_fan)
+        response = self.client.get(f"{self.url}mine/", {"owner": "rimu_fan"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["results"], [])

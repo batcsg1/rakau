@@ -19,6 +19,7 @@ import { NavBar } from "../../components/NavBar";
 import { ConditionBadge } from "../../components/ConditionBadge";
 import { RangeFilter } from "../../components/RangeFilter";
 import { SignificanceBadge } from "../../components/SignificanceBadge";
+import { TextFilter } from "../../components/TextFilter";
 import colors from "../../constants/colors";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useRefreshOnFocus } from "../../hooks/useRefreshOnFocus";
@@ -91,6 +92,21 @@ function rangeLabel(name: string, unit: string, min?: number, max?: number) {
   if (min !== undefined && max !== undefined) return `${name} ${min}–${max} ${unit}`;
   if (min !== undefined) return `${name} ≥ ${min} ${unit}`;
   return `${name} ≤ ${max} ${unit}`;
+}
+
+// A filter that's in use, shown as a chip that clears it when tapped
+function ActiveFilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <Pressable
+      onPress={onClear}
+      accessibilityRole="button"
+      accessibilityLabel={`Clear filter: ${label}`}
+      className="flex-row items-center gap-2 rounded-full bg-leaf px-4 py-2 active:opacity-70"
+    >
+      <Text className="font-iosevka text-sm text-white">{label}</Text>
+      <Text className="font-iosevka-semibold text-sm text-white">✕</Text>
+    </Pressable>
+  );
 }
 
 function TreeCard({ tree }: { tree: Tree }) {
@@ -306,25 +322,33 @@ export default function TreesScreen() {
         />
       ))}
 
-      {activeRanges.length > 0 && (
+      <TextFilter
+        label="Recorded by"
+        placeholder="Username, e.g. kauri_fan"
+        value={filters.owner}
+        onChange={(value) => setFilter("owner", value)}
+      />
+
+      {(activeRanges.length > 0 || filters.owner) && (
         <View className="mt-4 flex-row flex-wrap gap-2 px-6">
+          {filters.owner && (
+            <ActiveFilterChip
+              label={`Recorded by ${filters.owner}`}
+              onClear={() => setFilter("owner", undefined)}
+            />
+          )}
           {activeRanges.map((range) => (
-            <Pressable
+            <ActiveFilterChip
               key={range.name}
-              onPress={() =>
+              label={rangeLabel(range.name, range.unit, filters[range.min], filters[range.max])}
+              onClear={() =>
                 setFilters((current) => ({
                   ...current,
                   [range.min]: undefined,
                   [range.max]: undefined,
                 }))
               }
-              className="flex-row items-center gap-2 rounded-full bg-leaf px-4 py-2 active:opacity-70"
-            >
-              <Text className="font-iosevka text-sm text-white">
-                {rangeLabel(range.name, range.unit, filters[range.min], filters[range.max])}
-              </Text>
-              <Text className="font-iosevka-semibold text-sm text-white">✕</Text>
-            </Pressable>
+            />
           ))}
         </View>
       )}
