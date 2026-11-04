@@ -1,48 +1,39 @@
 # 10. Design Patterns and Programming Principles
 
-<!--
-Brief. Marks: 6. Across the project you must demonstrate:
-- at least TWO named design patterns, used where they solve genuine problems;
-- at least TWO programming principles / best practices (SOLID, DRY, separation of
-  concerns, defensive programming, dependency management, or another).
-Your final reflection (file 15) must evaluate how effectively you applied them.
-Warning from the brief: applying a pattern that does not fit is a direct LO1 loss.
-Only claim patterns that earn their place.
--->
 
-## Design pattern 1 — TODO (name)
+## Design pattern 1 — Strategy (DRF permission classes)
 
-- **Where used:** `path/to/file.ext:LINE` (and any others)
-- **Problem it solves here:** TODO
-- **Why this pattern:** TODO
-- **Alternative considered:** TODO — why rejected: TODO
-- **Trade-offs:** TODO
-- **How I will judge effectiveness (for file 15):** TODO
+- **Where used:** `IsOwnerOrReadOnly` (`rakau_backend/trees/permissions.py:4`) and `IsAdminOrReadOnly` (`rakau_backend/trees/permissions.py:26`) are the two strategies I wrote. `TreeViewSet` uses the first (`rakau_backend/trees/views.py:29`), `SpeciesViewSet` uses the second (`rakau_backend/trees/views.py:91`), and the `mine` action swaps in DRF's `IsAuthenticated` (`rakau_backend/trees/views.py:60`).
+- **Problem it solves here:** Trees and species both use a `ModelViewSet`, but they have different rules for who can write. Anyone can read a tree, but only its owner or staff can change it, and a tree with no owner is staff only. Species are shared reference data, so only staff can change them. My Trees is different again, because it needs a login even to read. The create, update and delete code is the same in each case. Only the rule changes.
+- **Why this pattern:** DRF's view calls `has_permission` and `has_object_permission` on whichever classes it's given, without knowing what rule they apply. That lets each rule be its own small class that can be swapped without touching the CRUD code. It also meant tree photos needed no new rule: the `photos` and `delete_photo` actions call `get_object()` (`rakau_backend/trees/views.py:72`, `:84`), which runs `IsOwnerOrReadOnly`, so photos follow the tree's rule automatically.
+- **Alternative considered:** Writing `if request.user != tree.owner` checks inside each view method — why rejected: a tree can be changed in five ways (update, partial update, delete, photo upload, photo delete), so the rule would be repeated five times, and missing one is a security hole. I would also have to override methods that `ModelViewSet` gives me for free.
+- **Trade-offs:** The rule isn't visible when you read a view method, so you have to open `permissions.py` to see it. The ownership check also only runs if the code calls `get_object()`, so a custom action that loaded a tree itself would skip it with no warning. There is also no `DEFAULT_PERMISSION_CLASSES` in `settings.py`, so a new view is open to everyone unless it sets its own permission class.
+- **How I will judge effectiveness (for file 15):** By whether a user who isn't the owner is actually refused by the API. `test_other_user_patch_returns_403_and_leaves_tree_unchanged` (`rakau_backend/trees/tests.py:161`), `test_tree_without_owner_can_only_be_changed_by_staff` (`:198`), `test_other_user_upload_returns_403_and_stores_nothing` (`:677`) and `SpeciesPermissionTests` (`:350`) cover this, and all 105 API tests pass. UAT T6 only partly supports it: all three participants passed, but that task shows the client hiding the Edit and Delete buttons, not the API refusing the request. I will also count how many new rules each feature needed. Photos (#44) needed none.
 
-## Design pattern 2 — TODO (name)
+## Design pattern 2 — Decorator (wrapping `fetch`)
 
-- **Where used:** `path/to/file.ext:LINE`
-- **Problem it solves here:** TODO
-- **Why this pattern:** TODO
-- **Alternative considered:** TODO — why rejected: TODO
-- **Trade-offs:** TODO
-- **How I will judge effectiveness (for file 15):** TODO
+- **Where used:** `request()` (`rakau_frontend/api/client.ts:8`), which is called by all 12 functions in `treesApi.ts`, `speciesApi.ts` and `accountsApi.ts`. The token refresh it depends on is `refreshAccessToken()` (`rakau_frontend/api/auth.ts:80`).
+- **Problem it solves here:** Every call to the Django API needs the same JSON headers and Bearer token. Access tokens also expire after 30 minutes, so any call can fail with a `401` in the middle of someone using the app. The user shouldn't be sent back to login when a refresh token could fix it without them noticing.
+- **Why this pattern:** `request()` keeps the shape of `fetch`: it takes the same `RequestInit` options and returns a normal `Response`, so the API functions still check `response.ok` as they would with `fetch`. It adds behaviour before the call (headers and token, `client.ts:15-24`) and after it (on a `401`, refresh once and retry, otherwise clear the tokens and go to login, `client.ts:31-37`). That's why it's a Decorator and not a Facade: it adds to `fetch` instead of hiding it behind a simpler interface. It's a function wrapper rather than the classic class version, and it takes a path rather than a full URL because it also adds `BASE_URL`.
+- **Alternative considered:** Attaching the token in each API call — why rejected: that's 12 functions, and the refresh-and-retry logic would have to be copied into all of them. Any function that missed it would log the user out when their token expired.
+- **Trade-offs:** `router.replace("/login")` (`client.ts:36`) ties navigation to the network layer, which makes `request()` harder to test on its own. The `retried` parameter is only used internally but is still part of the function's signature. Not every request goes through it either, on purpose: login and refresh use their own `post()` (`rakau_frontend/api/auth.ts:29`) so a failed login doesn't trigger the `401` handling, and Photon uses plain `fetch` (`rakau_frontend/api/photonApi.ts:123`) so the user's token is never sent to a third party.
+- **How I will judge effectiveness (for file 15):** By how little changes when the cross-cutting behaviour changes. `99e27b2` added token refresh and only touched files in `api/`, with no screen changes. Photo upload (#44) only needed one line in `request()` to skip the JSON `Content-Type` for `FormData` (`client.ts:17`).
 
 ---
 
-## Programming principle 1 — TODO (name)
+## Programming principle 1 — DRY
 
-- **Where applied:** `path/to/file.ext:LINE`
-- **What it looks like in the code:** TODO
-- **What it prevented / improved:** TODO
-- **Where I chose not to apply it, and why:** TODO
+- **Where applied:** `TreeForm` (`rakau_frontend/components/TreeForm.tsx:45`), used by Add Tree (`rakau_frontend/app/trees/new.tsx:69`) and Edit Tree (`rakau_frontend/app/trees/[id]/edit.tsx:91`). Smaller examples are `toOptions` (`rakau_frontend/constants/options.ts:14`), which builds the chip options from the label maps, and `ORDERINGS` (`rakau_backend/trees/filters.py:10`), which is used for both the default sort and the `?ordering=` filter.
+- **What it looks like in the code:** The form owns the fields, validation and error display. A screen only passes in what's different through `initial`, `submitLabel` and `onSubmit`. `new.tsx` calls `createTree` and goes to My Trees. `edit.tsx` calls `updateTree` and leaves out the species if it hasn't changed. Commit `84a06bc` made this change, which removed 277 lines from `new.tsx` before Edit Tree was built.
+- **What it prevented / improved:** Add and Edit can't drift apart. UAT I7 (#62) replaced the coordinate fields with an address or current location, which was a big change to the form. `8e0ec6d` made that change in `TreeForm.tsx`, `AddressSection.tsx` and `deviceLocation.ts`, and neither screen had to change, so both got the fix at once.
+- **Where I chose not to apply it, and why:** `rakau_frontend/api/types.ts` copies `Condition`, `Region`, `Significance` and `MAX_PHOTOS_PER_TREE` from the API by hand, and `mine.tsx:24` copies the page size. Python and TypeScript can't import from each other, and generating these from an API schema would add tooling for a few short lists that rarely change. Each copy has a "Mirrors ..." comment so it can be found. I also kept `FilterRow` (`rakau_frontend/app/trees/index.tsx:38`) separate from `ChipGroup`. They look alike, but `FilterRow` scrolls sideways and adds an "All" chip, while `ChipGroup` wraps and shows validation errors, so merging them would mean one component full of flags. One repeat is a miss rather than a decision: the `canModify` check is the same in `[id]/index.tsx:153` and `[id]/edit.tsx:56`, and should be one shared function.
 
-## Programming principle 2 — TODO (name)
+## Programming principle 2 — Defensive programming
 
-- **Where applied:** `path/to/file.ext:LINE`
-- **What it looks like in the code:** TODO
-- **What it prevented / improved:** TODO
-- **Where I chose not to apply it, and why:** TODO
+- **Where applied:** On the API: `rakau_backend/trees/serializers.py:39` (`validate_image`), `serializers.py:67` (active species only), `serializers.py:95` (read-only `owner`), `serializers.py:97` (duplicate check) and `rakau_backend/trees/filters.py:16` (reversed ranges). On the client: `rakau_frontend/api/errors.ts:17` (`toApiError`), `rakau_frontend/api/navigation.ts:5` (`safeNext`), `rakau_frontend/api/photonApi.ts:98` and `:128` (Photon data), and `rakau_frontend/app/trees/index.tsx:194` (stale responses).
+- **What it looks like in the code:** The API doesn't trust anything the client sends. `owner` can't be set in the request and comes from the token instead (`rakau_backend/trees/views.py:42`). Only active species are accepted. A photo's format is read from the file by Pillow rather than taken from its file name (`serializers.py:44`). The client doesn't assume things go well either. `toApiError` copes with a response that isn't JSON, such as Django's HTML error page. `safeNext` only accepts in-app paths. Photon results are limited to New Zealand, and a post code that isn't four digits is dropped. If a filter changes while a request is running, the older response is ignored (`cancelled` in the catalogue, `requestId` at `rakau_frontend/app/trees/mine.tsx:105`).
+- **What it prevented / improved:** Recording the same tree twice used to return a `500` `IntegrityError`. The `validate()` check from `5af9dc5` turned that into a `400` with a message the user can act on (`test_duplicate_species_at_same_location_returns_400`, `rakau_backend/trees/tests.py:47`). Read-only `owner` stops someone recording a tree under another user's name. The photo checks reject a file that isn't a real image (`test_wrong_file_type_returns_400`, `tests.py:691`). `safeNext` stops a crafted link sending someone to an outside site after they log in.
+- **Where I chose not to apply it, and why:** The client doesn't check the shape of its own API's responses. `return response.json()` is only typed at compile time, because I control both sides, so a mismatch is a bug to fix and a validation library isn't worth adding for it. Photon is different because it's a third party, so its data is checked. The five-photo limit (`serializers.py:50`) counts and then saves without a lock, so two uploads at the same moment could get a sixth photo in. That limit keeps the gallery tidy and doesn't protect anything, so I accepted that. `TreeForm` also doesn't check the maximum height, girth or crown spread. The API already rejects those values and the form shows its message under the field, so a second copy of the limits wasn't needed.
 
 ---
 
@@ -51,8 +42,11 @@ Only claim patterns that earn their place.
 <!-- Phase 4 requires walking through ONE pattern in your implementation,
 unscripted, in front of a marker. Pick it now and note the file + talking points. -->
 
-- Pattern to present: TODO
-- File(s): TODO
-- 3 talking points: (1) where (2) why (3) problem solved
+- Pattern to present: Strategy (DRF permission classes)
+- File(s): `rakau_backend/trees/permissions.py`, `rakau_backend/trees/views.py`, `rakau_backend/trees/tests.py`
+- 3 talking points:
+  1. **Where:** `IsOwnerOrReadOnly` is plugged into `TreeViewSet` at `views.py:29`, `IsAdminOrReadOnly` into `SpeciesViewSet` at `views.py:91`, and `mine` swaps in `IsAuthenticated` at `views.py:60`. Show that the view code never checks who the user is.
+  2. **Why:** Trees, species and My Trees share the same CRUD code but have different rules, so the rule is the part that varies. Show `delete_photo` calling `get_object()` at `views.py:84`, which gives photos the tree's rule with no extra code.
+  3. **Problem solved:** Without it, the ownership check would be repeated in five places and one could be missed. Run `test_other_user_patch_returns_403_and_leaves_tree_unchanged` (`tests.py:161`) to show another user gets a `403` and the tree doesn't change. Be ready to explain the weakness: the check only runs when the code goes through `get_object()`.
 
 ---
