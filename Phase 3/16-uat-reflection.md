@@ -1,11 +1,5 @@
 # 16. User Acceptance Testing Reflection
 
-<!--
-Brief. Marks: 7. ~400 words. Part of the final reflection.md.
-Assessed on specific evidence from your UAT sessions (file 11). Only your
-participants can tell you what confused them — use their actual words and results.
--->
-
 ## 1. Test scenario design (~90 words)
 
 Each of the eight tasks (T1–T8) maps to a Phase 1 acceptance criterion (file 11, Part 1), and the task cards give the data but not the screen to use. After planning I changed T1 to include registering (`8d56c7f`), swapped T1 and T2 (`225f07b`) and dropped the seeded data (`2828aaa`). Because of this, T2 could no longer show the empty state (F2-AC2), since the participant already had a tree. T7 was meant to test paging (F2-AC3), but all three participants read "oldest" as a sorting problem. So T7 ended up testing whether the list order is visible (F2-AC1), not paging.
@@ -23,40 +17,39 @@ Average ratings were Q4 (satisfied) 2.3 and Q5 (comfortable without help) 2.0. S
 
 ## 3. Feedback acted on vs. not (~110 words)
 
-<!-- TODO: add the commit/PR for each fix once merged. Issue IDs match file 11, Part 3; GitHub issues are #56–#63. -->
+**Fixed, mostly because each one broke an acceptance criterion:**
 
-**To fix, because each one breaks an acceptance criterion:**
-
-- **I1 (#56):** label the condition field (F1-AC4; P1, P2).
-- **I2 (#57):** fix the "No Region" bug (F1-AC1; P3, seen twice).
-- **I3 (#58):** ask for confirmation before deleting. P3 asked for "Are you sure you want to delete this tree?", but F1-AC5 already requires a confirmation, so T5 should not have been marked a pass.
-- **I4 (#59):** show the creation date on the catalogue and allow sorting by it (F2-AC1; all three participants).
-- **I5 (#60):** hide "Add" when logged out (F1-AC3; P1 called it "misleading").
-- **I6 (#61):** add labels for Girth and Crown Spread (F1-AC1; P3). P3 was "confused about what Trunk girth vs crown spread meant" and named these fields as the most confusing part.
-- **I7 (#62):** hide the latitude and longitude fields and fill them in automatically from the location the user enters (F1-AC1, F1-AC2; P1, P3). P1 said "most people aren't gonna need to manually enter them and could just be auto filled every time". P3 named the latitude and longitude fields as the most confusing part.
-- **I8 (#63):** tidy up the home screen by moving the text under the motto and logo off the main photo and into a Purpose section below it (P2, P3). P3 asked to "make the UI less clutered/less busy in areas such as the main page" and to "have a Purpose section that contains the text below the motto for Rakau". P2 said "the UI looks a bit cluttered". This doesn't break an acceptance criterion, but it's a small change that two participants asked for on their own.
-- **I9 and I11** will be fixed as part of I7 (#62) and I4 (#59): hiding the coordinates means they can no longer be overwritten (P1), and the detail page will show the time a tree was recorded, not just the date (P3).
+- **I1 (#56, `71ba5af`):** labelled the condition field on the detail page (F1-AC4; P1, P2).
+- **I2 (#57, `464b372`):** fixed the "No Region" bug (F1-AC1; P3, seen twice). The Region chips toggled, so when P3 tapped the auto-filled Otago chip to confirm it, the region was cleared.
+- **I3 (#58, `fe4a7d4`):** the delete prompt now asks "Are you sure you want to delete this {species}?" There was already a confirmation step (`1865912`), so T5 was a fair pass, but P3 didn't read it as a question.
+- **I4 (#59, `3b3003e`):** both lists show when each tree was recorded and can sort Newest or Oldest first (F2-AC1; all three participants).
+- **I5 (#60, `3c8c542`):** "Add" is hidden when logged out (F1-AC3; P1 called it "misleading").
+- **I6 (#61, `dedc9f7`):** Girth and Crown Spread now have a short explanation under them (F1-AC1). P3 was "confused about what Trunk girth vs crown spread meant".
+- **I7 (#62, `8e0ec6d`):** the latitude and longitude fields are gone. The location comes from the address or the phone instead (F1-AC1, F1-AC2; P1, P3). P1 said "most people aren't gonna need to manually enter them and could just be auto filled every time".
+- **I8 (#63, `15fb38b`):** the text under the motto moved into a Purpose section (P2, P3). P3 asked to "make the UI less clutered/less busy". It doesn't break an acceptance criterion, but two people asked for it without being prompted.
+- **I9 and I11** came with I7 and I4. Without coordinate fields, nothing can overwrite them (P1). The detail page already showed the time, so P3's point was really about the lists, which I4 fixed.
+- **I12 (#70, `0f3b2a8`, `b46f9f1`):** I first deferred filter by creator (P1, P2), but I had time to add it in Sprint 4.
 
 **Deferred or not fixed:**
 
-- **Map pin (P1) and definitions for the other fields (P3: health values):** deferred to Sprint 4, because they are usability improvements, not defects.
+- **Map pin (P1, #71), keyboard covering the measurements (P3, #64) and health value definitions (P3):** still open. These are usability problems, not defects, and the map pin needs a new library.
 - **Imperial units and regional size guidelines (P3):** won't fix. Both are outside REQ-01 and REQ-02.
 - **Page-based pagination (P2):** won't fix. F2-AC3 deliberately uses infinite scroll.
 
 ## 4. How the changes improved the feature(s) (~70 words)
 
-<!-- TODO: fill in once the fixes are merged and re-checked (file 11, Part 4). Only record results that were actually observed. -->
-
 | Change (issue) | Criterion re-verified | Result |
 |---|---|---|
-| I1 condition label (#56) | F1-AC4 | TODO |
-| I2 region saved and shown (#57) | F1-AC1 | TODO |
-| I3 delete confirmation (#58) | F1-AC5 | TODO |
-| I4 date shown and sortable (#59) | F2-AC1 | TODO |
-| I5 "Add" hidden when logged out (#60) | F1-AC3 | TODO |
-| I6 Girth and Crown Spread labels (#61) | F1-AC1 | TODO |
-| I7 coordinates hidden and filled automatically (#62) | F1-AC1, F1-AC2 | TODO |
-| I8 home screen text moved into a Purpose section (#63) | None (check with a participant) | TODO |
+| I1 condition label (#56) | F1-AC4 | The condition label appears on the right hand side of the screen, a distance apart from an individual tree record's species name|
+| I2 region saved and shown (#57) | F1-AC1 | API tests pass (a new tree keeps its region and My Trees returns it). The phone re-run wasn't recorded |
+| I3 delete confirmation (#58) | F1-AC5 | Partly: the prompt now reads as a question (screenshot on #58). T5 not re-run |
+| I4 date shown and sortable (#59) | F2-AC1 | The two sort options for newest and oldest first appear near the top of the 'Tree Catalogue' screen |
+| I5 "Add" hidden when logged out (#60) | F1-AC3 | No "+ Add" option appears when logged out (#60) |
+| I6 Girth and Crown Spread labels (#61) | F1-AC1 | Partly: the explanations show (#61). |
+| I7 coordinates hidden and filled automatically (#62) | F1-AC1, F1-AC2 | Pass: no coordinate fields, the right coordinates were saved, and an empty location was rejected (#62) |
+| I8 home screen text moved into a Purpose section (#63) | Exempt from defined Acceptance Criteria | Partly: the Purpose section shows (#63). Not checked with a participant |
+
+I7 is the change I'm happiest with. P1 and P3 both named the coordinates as the most confusing part, and now there's nothing to type. What I can't say yet is whether the app is easier for real users. I did every re-check myself, knowing what to look for. Re-running T1, T4 and T7 with a participant is the only way to find out if the low Q4 and Q5 scores improve.
 
 ## 5. What you would do differently next round (~40 words)
 
