@@ -17,7 +17,7 @@ development.
 | v0.1.0 | Sprint 1 | 2026-10-12 | Species/Tree API with CRUD + filtering; Expo client with home screen and filterable tree catalogue |
 | v0.2.0 | Sprint 2 | 2026-10-20 | JWT auth; Add, edit and delete a tree; My Trees with infinite scroll; height/girth/region and significance filters; street address with autocomplete and GPS; 60 API tests |
 | v0.3.0 | Sprint 3 (UAT) | 2026-10-27 | UAT with 3 participants: test plan, raw results, issue log (18 issues, fixes tracked as #56–#63) and reflection; client upgraded to Expo SDK 58 |
-| v0.4.0 | Sprint 4 | TODO | TODO (UAT fixes #56–#63 and re-verification) |
+| v1.0.0 | Sprint 4 (UAT hardening) | 2026-11-09 | UAT fixes #56–#63 with re-verification; tree photos; filter by creator; species seeding; 105 API tests; final reflections |
 
 ---
 
@@ -408,47 +408,120 @@ npx expo start                    # i = iOS simulator, a = Android emulator
 
 ---
 
-## Release notes template (copy per release)
+### v1.0.0 — Official Release
 
-### vX.Y.Z — Sprint N — YYYY-MM-DD
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/9339199c-f087-41a3-a1a6-402fc85c7ea5" />
+
 
 **Delivered**
-- REQ-TODO: TODO
-- REQ-TODO: TODO
+
+*UAT fixes (#56–#63)*
+
+Each fix has a row in Part 4 of `Phase 2/11-user-acceptance-testing.md`, which records the change, the commit, the acceptance criterion it touches and the re-check result.
+- **#56 (I1), `71ba5af`:** the tree detail page labels the condition badge, and the significance badge when it's shown.
+- **#57 (I2), `464b372`:** tapping the selected Region chip no longer clears an auto-filled region. A "Not set" chip clears it instead, and API tests check a created tree keeps its region.
+- **#58 (I3), `fe4a7d4`:** the delete confirmation asks "Are you sure you want to delete this {species}?", with "No, keep it" and "Yes, delete" buttons.
+- **#59 (I4, I11), `3b3003e`:** the catalogue and My Trees show the date and time each tree was recorded, and both have a Newest first / Oldest first sort (`?ordering=newest|oldest`).
+- **#60 (I5), `3c8c542`:** the catalogue's "+ Add" button is only shown to signed-in users.
+- **#61 (I6), `dedc9f7`:** height, trunk girth and crown spread each have a short explanation under the label.
+- **#62 (I7, I9), `8e0ec6d`:** the Add/Edit form no longer has latitude and longitude fields. The coordinates come from a picked or typed address, or from "Use my current location". A typed address is only looked up once it has a city or post code, which fixes the Hamilton mix-up in I9.
+- **#63 (I8), `15fb38b`:** the home screen text moved off the photo into a Purpose section.
+
+*New features*
+- **Tree photos (#44), `ca9fcb3`, `bb935f9`, `7760369`:**
+
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/f69fa821-a016-4f05-9db0-4a1f083ab684" />
+
+  - **API:** `GET` and `POST /api/trees/{id}/photos/`, and `DELETE /api/trees/{id}/photos/{photo_id}/`. Only the owner or staff can upload or delete. Uploads must be a real JPEG, PNG or WebP image, 5 MB or smaller, with at most 5 photos per tree. Deleting a photo, or its tree, also removes the file.
+  - **Client:** a photo strip on the tree page. The owner can take a photo or choose one from the library, and delete a photo after confirming.
+
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/4a8213fc-362d-4099-bd6c-72784dc4229f" />
+
+- **Filter by creator (#70, I12), `0f3b2a8`, `b46f9f1`:** a "Recorded by" input on the catalogue suggests usernames while typing (from the new `GET /api/trees/owners/?search=`), in a short scrolling list. It filters with `?owner=<username>`, which ignores case, and shows as a clearable chip.
+- **Tappable home screen cards (#72), `b670cd3`:** "Add & Record Trees" opens Add Tree, and "Browse the Catalogue" and "Filter & Discover" open the catalogue.
+- **Species seeding, `0715194`:** `python -m seeding` adds native and common exotic NZ trees. It's safe to re-run, and `setup.sh` now runs it.
+- Tree photo backgrounds on the login, register, catalogue, My Trees, Add Tree and tree detail screens.
+
+*Quality*
+- **105 API tests, all passing**, up from 45 at `v0.3.0`:
+  - restored the tests lost in `971ae5b` (#65, `6d9500a`)
+  - added tests for updating and deleting a tree (`9720313`), tree photos, the owner filter and suggestions, and species seeding
+- `ruff`, Prettier and `tsc` are clean, and `makemigrations --check` reports no pending changes.
+- Test coverage config (`.coveragerc`) and instructions for running it are in `api-documentation.md`.
+
+*Documentation*
+- UAT Parts 4 and 5 (changes, re-verification and findings summary) in `Phase 2/11-user-acceptance-testing.md`.
+- Design patterns and principles in `Phase 2/10-design-patterns-and-principles.md`.
+- Reflections (files 15–17) assembled into `reflection.md` at the repo root.
 
 **Known issues**
-- TODO
+- **Re-verification is incomplete.** Every re-check in Part 4 was done by the developer, not a participant. These steps aren't recorded yet:
+  - the phone re-run for I2
+  - the full T5 for I3
+  - T7 for I4
+  - showing I6 and I8 to a participant
+- **My Trees has no region filter.** #34 is closed, but its screenshots show the catalogue; `app/trees/mine.tsx` still only filters by condition.
+- **No API tests for the height and girth range filters (#32).**
+- **Deferred from UAT:**
+  - I10: the keyboard covers the measurement fields (#64)
+  - I13: map pin (#71)
+  - I14: definitions for the health values
+- **Three ESLint warnings** (`react-hooks/set-state-in-effect`) in the catalogue, My Trees and tree detail loading effects (#66).
+- **My Trees rows still show a letter placeholder**, not the tree's first photo.
+- **Photos are stored in `rakau_backend/media/`** and are only served by `runserver` while `DEBUG=True`. The 5-photo limit isn't enforced under a lock, so two uploads at the same moment could add a sixth.
+- **`/api/trees/owners/` is open to anyone.** It lists every username that has recorded a tree. That's by design, because each tree already shows its owner.
+- **Still open from earlier releases:**
+  - no automated client tests and no CI
+  - `npm run web` doesn't work
+  - address lookup depends on Photon's free public server
+  - GPS needs a real phone or an emulator set to an NZ location
+  - the catalogue isn't paginated
 
 **Run the API locally (from this tag)**
 ```bash
-git checkout vX.Y.Z
-cd api
-python -m venv .venv && source .venv/bin/activate
+git checkout v1.0.0
+./setup.sh --setup-only           # or ./setup.sh to also start both servers; --check also runs the tests and linters
+```
+To set it up by hand instead:
+```bash
+cd rakau_backend
+python -m venv venv
+source venv/bin/activate          # fish: source venv/bin/activate.fish · Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in values
+cp .env.example .env              # set DJANGO_SECRET_KEY, DJANGO_DEBUG=True, DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,10.0.2.2
 python manage.py migrate
-python manage.py loaddata seed   # if applicable
-python manage.py runserver
+python -m seeding                 # starter species catalogue; safe to re-run
+python manage.py createsuperuser  # optional, for /admin/
+python manage.py runserver 0.0.0.0:8000
+python manage.py test             # 105 tests
 ```
 
 **Run the client locally (from this tag)**
+Needs **Node ≥ 22.13**.
 ```bash
-cd client
+cd rakau_frontend
 npm install
-cp .env.example .env   # set API base URL
-npx expo start
+cp .env.example .env              # EXPO_PUBLIC_API_URL=http://127.0.0.1:8000/api
+npx expo start                    # a = Android emulator, i = iOS simulator
 ```
+- On a physical phone:
+  - Use the **store version of Expo Go (SDK 58)**.
+  - Set `EXPO_PUBLIC_API_URL=http://<your-LAN-IP>:8000/api` and add that IP to `DJANGO_ALLOWED_HOSTS`.
+  - Allow location, camera and photo access when asked.
+- On the Android emulator, run `adb reverse tcp:8000 tcp:8000`.
 
 **Technical notes**
-- Migrations added: TODO
-- New env vars: TODO
-- Breaking changes: TODO
-
----
-
-## Marker checklist
-
-- [ ] One semantic-versioned tag per sprint, including UAT
-- [ ] Release notes for each: delivered / known issues / local run (API + client) / technical notes
-- [ ] Each tagged commit actually builds and runs locally
-- [ ] Version numbers increase sensibly across sprints (incremental development visible)
+- New dependencies:
+  - API: `Pillow` 12.3.0, for validating photo uploads.
+  - Client: `expo-image-picker` ~58.0.10 and `expo-file-system` ~58.0.13. The `app.json` plugin asks for camera and photo library access, but not the microphone.
+- Migration added: `trees/0008_treephoto`.
+- New endpoints:
+  - `GET`/`POST /api/trees/{id}/photos/`
+  - `DELETE /api/trees/{id}/photos/{photo_id}/`
+  - `GET /api/trees/owners/?search=`
+- New query parameters on `/api/trees/` and `/api/trees/mine/`: `ordering=newest|oldest` and `owner=<username>`.
+- Tree responses now include a `photos` list. `MEDIA_URL` and `MEDIA_ROOT` are set in `settings.py`.
+- No new env vars.
+- Breaking changes since v0.3.0:
+  - None in the API, because every change adds something.
+  - In the client, the Add/Edit form no longer has latitude and longitude fields. The API still accepts and validates them.
