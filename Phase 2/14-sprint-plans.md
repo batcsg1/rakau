@@ -1,6 +1,5 @@
 # 14. Sprint Plans
 
----
 
 ## Sprint 1 — 21 Sep - 4 Oct (v0.1.0)
 
