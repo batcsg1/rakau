@@ -1,29 +1,5 @@
 # 14. Sprint Plans
 
-<!--
-One sprint plan per sprint (Sprint 1-4, including the UAT sprint). Copy the
-template below for each new sprint. Each plan states: the sprint goal, the
-sprint backlog (issues pulled from the product backlog in
-`Phase 1/02-backlog-requirements-analysis.md`), the Definition of Done, and
-known risks/dependencies going in.
--->
-
-## Sprint plan template (copy per sprint)
-
-### Sprint N — DD Mon - DD Mon (vX.Y.0)
-
-**Sprint goal.** TODO
-
-**Sprint backlog.**
-
-| Issue | Type | Notes |
-|---|---|---|
-| TODO | TODO | TODO |
-
-**Definition of Done.** TODO
-
-**Risks / dependencies going in.** TODO
-
 ---
 
 ## Sprint 1 — 21 Sep - 4 Oct (v0.1.0)
