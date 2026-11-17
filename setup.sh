@@ -7,7 +7,7 @@
 #   ./setup.sh --check       also run the API tests and both linters before starting
 #
 # Safe to re-run: existing .env files and the virtual environment are reused, never overwritten.
-
+# Test commit - 17/11/2026
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
